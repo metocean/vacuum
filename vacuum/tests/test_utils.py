@@ -29,9 +29,20 @@ def test_flister_re():
     with tempfile.NamedTemporaryFile() as tmpfile:
         filename = os.path.basename(tmpfile.name)
         root = os.path.dirname(tmpfile.name)
-        assert filename in list(flister(root, '.+'+filename[4:]))
+        assert tmpfile.name in list(flister(root, '.+'+filename[4:]))
         files = list(flister(root, filename))
-        assert filename in files and len(files) == 1
+        assert tmpfile.name in files and len(files) == 1
+
+def test_flister_recursive():
+    tmpdir1 = tempfile.mkdtemp()
+    tmpdir2 = tempfile.mkdtemp(dir=tmpdir1)
+    tmpdir3 = tempfile.mkdtemp(dir=tmpdir2)
+    
+    with tempfile.NamedTemporaryFile(prefix='xyz', dir=tmpdir1) as tmpfile1:
+        with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir2) as tmpfile2:
+            with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir3) as tmpfile3:
+                filelist = list(flister(tmpdir1, 'xyz', recursive=True))
+    assert len(filelist) == 3
 
 def test_flister_default():
     assert list(flister(os.path.dirname(__file__)))

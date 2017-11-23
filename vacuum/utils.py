@@ -2,6 +2,7 @@ import os
 import re
 import six
 import datetime
+import yaml
 
 import timeparser
 
@@ -20,10 +21,13 @@ def pastdt(parseable):
 
 
 def older_then(filepath, then):
+    """ 
+    Verify if a file is older `then` a giving datetime object
+    """
     mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
     return True if mtime < then else False
     
-def flister(root=None, patterns=None, older=None):
+def flister(root=None, patterns=None, older=None, recursive=False):
     """Genrates a list of files and dirs giving root directory and a 
        list of matching RE patterns. Also filters for files `older` then
        a period parseable by py-timeparser.
@@ -43,11 +47,11 @@ def flister(root=None, patterns=None, older=None):
     for filepath in iglob(join(root,'*')):
         filename = basename(filepath)
         for patt in compiled:
+            if recursive and os.path.isdir(filepath):
+                for filepath in flister(filepath, patterns, older, 
+                                        recursive):
+                    yield filepath
             if patt.match(filename):
-                if older is None:
-                    yield filename
-                elif older is not None and older_then(filepath, then):
-                    yield filename
-
-
-
+                if older is None or (older is not None \
+                                     and older_then(filepath, then)):        
+                    yield filepath
