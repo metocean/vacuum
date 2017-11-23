@@ -33,6 +33,10 @@ def test_flister_re():
         files = list(flister(root, filename))
         assert filename in files and len(files) == 1
 
+def test_flister_default():
+    assert list(flister(os.path.dirname(__file__)))
+    assert not list(flister('/nonexistent'))
+
 @mock.patch('vacuum.utils.getmtime')
 def test_flister_older_then(getmtime):
     getmtime.return_value = (datetime.datetime.now()\

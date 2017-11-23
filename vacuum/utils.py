@@ -21,19 +21,17 @@ def pastdt(parseable):
 
 def older_then(filepath, then):
     mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
-    print(mtime, then)
-    print(mtime < then)
     return True if mtime < then else False
     
-def flister(root, patterns=['.*'], older=None):
+def flister(root=None, patterns=None, older=None):
     """Genrates a list of files and dirs giving root directory and a 
        list of matching RE patterns. Also filters for files `older` then
        a period parseable by py-timeparser.
 
     """
-
+    root = root or abspath('.')
     if not isinstance(patterns, (tuple,list)):
-        patterns = [patterns]
+        patterns = [patterns or '.+']
 
     compiled = []
     for patt in  patterns:
