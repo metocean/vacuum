@@ -3,6 +3,9 @@ import tempfile
 import time
 import datetime
 import mock
+import pytest
+import shutil
+import stat
 
 from ..utils import *
 
@@ -58,3 +61,33 @@ def test_flister_older_then(getmtime):
         root = os.path.dirname(tmpfile.name)
         assert len(list(flister(root, filename, older='2d'))) == 1
         assert len(list(flister(root, filename, older='10d'))) == 0
+
+def test_delete_file():
+    tmpfile = tempfile.NamedTemporaryFile()
+    assert os.path.exists(tmpfile.name)
+    delete([tmpfile.name])
+    assert not os.path.exists(tmpfile.name)
+
+def test_delete_dir():
+    tmpdir = tempfile.mkdtemp()
+    assert os.path.isdir(tmpdir)
+    delete([tmpdir])
+    assert not os.path.isdir(tmpdir)
+
+@mock.patch('shutil.rmtree')
+def test_delete_error(rmtree):
+    tmpdir = tempfile.mkdtemp()
+    rmtree.side_effect = OSError('Some OS Error')
+    with pytest.raises(Exception) as e_info:
+        delete([tmpdir], raise_errors=True)
+    os.removedirs(tmpdir)
+    assert not os.path.isdir(tmpdir)
+
+@mock.patch('shutil.rmtree')
+def test_delete_error_print(rmtree):
+    tmpdir = tempfile.mkdtemp()
+    rmtree.side_effect = OSError('Some OS Error')
+    delete([tmpdir], raise_errors=False)
+    assert os.path.isdir(tmpdir)
+    os.removedirs(tmpdir)
+    assert not os.path.isdir(tmpdir)

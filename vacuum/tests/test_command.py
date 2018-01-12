@@ -1,10 +1,11 @@
 import os
 import mock
 
-from ..command import *
+from ..command import execute, parser
 
-@mock.patch('builtins.print')
-def test_list_command_with_pattern(printer):
+@mock.patch('vacuum.utils.flister')
+def test_list_command_with_pattern(flister):
+    flister.return_value(['/var/lib','/var/log'])
     args = parser.parse_args(['-p','var','list','/'])
     execute(args)
-    printer.assert_called()
+    flister.assert_called()
