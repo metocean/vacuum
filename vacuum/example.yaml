@@ -1,19 +1,19 @@
 filesystem:
-    "/data": # <--- This cannot be an re
-        older: 60d
+    "/data": # <--- glob matching pattern
+        older_then: 60d
         recursive: True #(recursive should be default?)
         yank_dirs: True # Delete the folders instead of crawl
-        patterns:
+        file_patterns:
             - .+\.txt
         exceptions:
-            "roms*":
-                older: 50d
+            "roms*": # <-- re matching pattern
+                older_then: 50d
                 file_patterns: # default to all the files
                     - 's[o|O]me RE'
                     - 's[o|O]me RE 2'
 
     "/data":
-        older: 30d
+        older_then: 30d
         recursive: True
 
 # maybe we don't need a docker cleanup and just user "docker system prune" command

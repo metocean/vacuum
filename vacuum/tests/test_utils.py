@@ -6,6 +6,7 @@ import mock
 import pytest
 import shutil
 import stat
+import six
 
 from ..utils import *
 
@@ -21,12 +22,11 @@ def test_pastdt():
 
 @mock.patch('vacuum.utils.getmtime')
 def test_older_then(getmtime):
-    getmtime.return_value = (datetime.datetime.now()\
-                            - datetime.timedelta(days=20)).timestamp()
+    getmtime.return_value = timestamp(datetime.datetime.now()\
+                            - datetime.timedelta(days=20))
     with tempfile.NamedTemporaryFile() as tmpfile:
         assert older_then(tmpfile.name, pastdt('15d'))
         assert not older_then(tmpfile.name, pastdt('21d'))
-
 
 def test_flister_re():
     with tempfile.NamedTemporaryFile() as tmpfile:
@@ -44,7 +44,7 @@ def test_flister_recursive():
     with tempfile.NamedTemporaryFile(prefix='xyz', dir=tmpdir1) as tmpfile1:
         with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir2) as tmpfile2:
             with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir3) as tmpfile3:
-                filelist = list(flister(tmpdir1, 'xyz', recursive=True))
+                filelist = list(flister(tmpdir1, 'xyz', recursive=True,max_depth=3))
     assert len(filelist) == 3
 
 def test_flister_default():
@@ -53,8 +53,8 @@ def test_flister_default():
 
 @mock.patch('vacuum.utils.getmtime')
 def test_flister_older_then(getmtime):
-    getmtime.return_value = (datetime.datetime.now()\
-                            - datetime.timedelta(days=4)).timestamp()
+    getmtime.return_value = timestamp(datetime.datetime.now()\
+                            - datetime.timedelta(days=4))
 
     with tempfile.NamedTemporaryFile() as tmpfile:
         filename = os.path.basename(tmpfile.name)
@@ -91,3 +91,18 @@ def test_delete_error_print(rmtree):
     assert os.path.isdir(tmpdir)
     os.removedirs(tmpdir)
     assert not os.path.isdir(tmpdir)
+
+
+def test_datetime_from_filename_parser():
+    example = '/data/wrf/gfs_nz8km/wrf20180114/nz_8km_06z.GrbF042'
+    expected = datetime.datetime(2018,1,14,6)
+    assert path2dt(example) == expected
+
+    example = '/data/ww3/gfs_glob-st4/ww320180112_18z/glob20180112T18.nc'
+    expected = datetime.datetime(2018,1,12,18)
+    assert path2dt(example) == expected
+
+    example = '/data/kd490/global/modisa20180113/A2018013.L3m_DAY_KD490_Kd_490_4km.nc'
+    expected = datetime.datetime(2018,1,13,0)
+    assert path2dt(example) == expected
+
