@@ -38,7 +38,6 @@ def print_filelist(filelist):
 
 def _clean(filelist):
     filelist = [f for f in filelist]
-    print filelist
     if len(filelist) == 0:
         print('No files found to be cleaned for the given selection.')
         return
@@ -67,6 +66,7 @@ def _clean(filelist):
 def execute(args):
     filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
                        args.max_depth)
+    print 'hi'
     if args.command == 'list':
         return print_filelist(filelist)
     elif args.command == 'clean':

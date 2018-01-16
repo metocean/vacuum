@@ -1,14 +1,15 @@
 filesystem:
     "/data": # <--- glob matching pattern
         older_then: 60d
-        recursive: True #(recursive should be default?)
-        yank_dirs: True # Delete the folders instead of crawl
-        file_patterns:
+        date_from_filename_format: %Y%m%d
+        time_from_filename_format: %Hz
+        recursive: True 
+        patterns:
             - .+\.txt
         exceptions:
             "roms*": # <-- re matching pattern
                 older_then: 50d
-                file_patterns: # default to all the files
+                patterns: # default to all the files
                     - 's[o|O]me RE'
                     - 's[o|O]me RE 2'
 
@@ -18,11 +19,20 @@ filesystem:
 
 # maybe we don't need a docker cleanup and just user "docker system prune" command
 
-docker:
-    images:
-        unused_for: 40d 
+docker_prune:
+    images:  
+        ignore: 
+            - !!python/object/apply:scheduler.core.get_active_images [] # A function that generates a list of image names
+            - scheduler
+            - metocean/bla
+        force: True # False (default) will only remove images with no container associated with
+        filters: # filters for https://docker-py.readthedocs.io/en/stable/images.html#docker.models.images.ImageCollection.list
+            - name: 'user/repo:tag' # filter all tags for this related repository name or specify tag
+              dangling: true # This will only clean dangling images 
+            - name: 'metocean/'
     containers:
-        stopped: 40d
-        exited: 30d
         filters:
-            - 
+            - name: dedicated
+              stopped: 40d
+              exited: 30d
+            -  
