@@ -55,14 +55,16 @@ def timestamp(dtobj):
     elif six.PY3:
         return dtobj.timetuple()
 
-def pastdt(parseable):
+def pastdt(parseable, utc=False):
     '''
     Return datetime object giving a py-timeparser parseable period from now.
     '''
     seconds = timeparser.parse(parseable)
     then = datetime.timedelta(seconds=seconds)
-    return datetime.datetime.now()-then
-
+    if utc:
+        return datetime.datetime.utcnow()-then
+    else:
+        return datetime.datetime.now()-then 
 def older_then(filepath, then, datetime_from_filepath=False):
     """ 
     Verify if a file is older `then` a giving datetime object

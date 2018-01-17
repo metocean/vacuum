@@ -7,7 +7,7 @@ filesystem:
         patterns:
             - .+\.txt
         exceptions:
-            "roms*": # <-- re matching pattern
+            "roms*": # <-- RE search pattern
                 older_then: 50d
                 patterns: # default to all the files
                     - 's[o|O]me RE'
@@ -17,22 +17,24 @@ filesystem:
         older_then: 30d
         recursive: True
 
-# maybe we don't need a docker cleanup and just user "docker system prune" command
 
 docker_prune:
     images:  
-        ignore: 
+        ignore: # Accept list of image names or matching RE
             - !!python/object/apply:scheduler.core.get_active_images [] # A function that generates a list of image names
-            - scheduler
-            - metocean/bla
+            - user/.+  # All images from user
+            - metocean/some_image:1.1.1
         force: True # False (default) will only remove images with no container associated with
         filters: # filters for https://docker-py.readthedocs.io/en/stable/images.html#docker.models.images.ImageCollection.list
             - name: 'user/repo:tag' # filter all tags for this related repository name or specify tag
               dangling: true # This will only clean dangling images 
-            - name: 'metocean/'
     containers:
-        filters:
+        ignore: # sames images:ignore but containers names instead
+            - conteiner1
+        force: True # SIGKILL for running containers
+        filters: # https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.list
             - name: dedicated
-              stopped: 40d
-              exited: 30d
-            -  
+              status: exited
+              older_then: 2m # created more then 2 months ago
+
+            -  name: container_b
