@@ -136,10 +136,10 @@ def delete(filelist, raise_errors=False):
     success_files, success_directories = [], []
     for filepath in filelist:
         try:
-            if os.path.isdir(filepath):
+            if isdir(filepath):
                 shutil.rmtree(filepath)
                 success_directories.append(filepath)
-            elif os.path.isfile(filepath):
+            elif isfile(filepath):
                 os.remove(filepath)
                 success_files.append(filepath)
         except Exception as exc:
@@ -152,9 +152,9 @@ def delete(filelist, raise_errors=False):
 def archive(filelist, destination, follow_links=False, ignore=[]):
     ignore_func = ignore_paterns(*ignore) if ignore else None
     for filepath in filelist:
-        if os.path.isdir(filepath):
+        if isdir(filepath):
             shutil.copytree(filepath, destination, ignore=ignore_func)
-        elif os.path.isfile(filepath):
+        elif isfile(filepath):
             shutil.move(filepath, destination)
-        elif follow_links and os.path.islink(filepath):
+        elif follow_links and islink(filepath):
             basename()

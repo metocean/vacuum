@@ -1,13 +1,13 @@
-filesystem:
-    "/data": # <--- glob matching pattern
+clean:
+    -   root: /data # <--- directory glob matching pattern
         older_then: 60d
         date_from_filename_format: %Y%m%d
         time_from_filename_format: %Hz
         recursive: True 
-        patterns:
+        patterns: # <- RE filters to include
             - .+\.txt
-        exceptions:
-            "roms*": # <-- RE search pattern
+        subfolders:
+            "roms/.": # <-- RE search pattern
                 older_then: 50d
                 patterns: # default to all the files
                     - 's[o|O]me RE'
@@ -16,6 +16,9 @@ filesystem:
     "/data":
         older_then: 30d
         recursive: True
+
+archive:
+
 
 
 docker_prune:

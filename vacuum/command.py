@@ -1,3 +1,4 @@
+import os
 import argparse
 import pprint 
 import six
@@ -5,75 +6,99 @@ import six
 from .utils import flister, delete
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-r','--recursive', 
-                    help='Find files inside sub-folders recursivelly',
-                    action='store_true')
-parser.add_argument('-f','--force', 
-                    help="Don't prompt for confirmation on archive or cleaning operations",
-                    action='store_true')
-parser.add_argument('-p','--pattern', 
-                    help='A RE pattern to search files inside root dir, accept multiple values',
-                    action='append',
-                    default=None)
-parser.add_argument('-o','--older_then', 
-                    help='Find files older then a giving period (i.e. 1h or 2min or 5d)',
-                    action='store',
-                    default=None)
-parser.add_argument('-d','--max_depth', 
-                    help='Max depth to recurse directories after root dirs',
-                    action='store',
-                    default=1,
-                    type=int)
-parser.add_argument('command', help='List files that matches the given conditions',
-                    choices=['list', 'clean', 'archive'])
-parser.add_argument('root', 
-                    help='Root directory to search files for')
 
-def print_filelist(filelist):
+subparser = parser.add_subparsers(help='Available opertions for vaccum')
+
+parser_list = subparser.add_parser('list', help='List files according with conditions' )
+parser_clean = subparser.add_parser('clean', help='Clean up files')
+parser_scrub = subparser.add_parser('scrub', help='Clean up docker images and containers')
+parser_archive = subparser.add_parser('archive', help='Archive files and directories')
+
+recursive_args = []
+
+
+for sub in [parser_list, parser_clean]:
+    sub.add_argument('-r','--recursive', 
+                        help='Find files inside sub-folders recursivelly',
+                        action='store_true')
+    sub.add_argument('-p','--pattern', 
+                        help='A RE pattern to search files inside root dir, accept multiple values',
+                        action='append',
+                        default=None)
+    sub.add_argument('-o','--older_then', 
+                        help='Find files older then a giving period (i.e. 1h or 2min or 5d)',
+                        action='store',
+                        default=None)
+    sub.add_argument('-d','--max_depth', 
+                        help='Max depth to recurse directories after root dirs',
+                        action='store',
+                        default=1,
+                        type=int)
+    sub.add_argument('root', help='Root directory to search files for')
+
+parser_clean.add_argument('-f','--force', help="Don't prompt for confirmation",
+                        action='store_true')
+
+def list_files(args=None, filelist=None):
+    filelist = filelist or flister(args.root, args.pattern, args.older_then, args.recursive, 
+                                   args.max_depth)
     files = []
     for filepath in filelist:
         print(filepath)
         files.append(filepath)
     return files
 
-def _clean(filelist):
-    filelist = [f for f in filelist]
-    if len(filelist) == 0:
-        print('No files found to be cleaned for the given selection.')
+def clean(args):
+    filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
+                       args.max_depth)
+    try: 
+        first_file = filelist.next()
+    except StopIteration: 
+        print('Floor is shining, nothing to clean!')
         return
-    message = 'Were selected %d files or directories to be vacuum cleaned, Are you sure (l/y/N):' % len(filelist)
+
+    message = 'There is dust to be vacuum-cleaned, Power ON? (l/y/N):'
     while True:
-        if force:
+        if args.force:
             option = 'Y'
         else:
             option = six.moves.input(message) or 'N'
         if option == 'l':
-            print_filelist(filelist)
+            list_files(filelist=[first_file])
+            list_files(filelist=filelist)
         elif option in ['y','Y']:
+            files0, dirs0, errors0 = delete([first_file])
             files, dirs, errors = delete(filelist)
-            print('Successfully cleaned %d files and %d directories!' %\
-                                                     (len(files),len(dirs)))
+            errors.update(errors0)
+            if files:
+                print('Successfully vacuum-cleaned %d files and %d directories!' %\
+                                                 (len(files+files0),
+                                                  len(dirs+dirs0)))
             if errors:
-                print('Some files or directories could not be deleted: %s',
-                                            os.linesep.join(errors.keys()))
+
+                message = 'Oh no! Some dust seems glued to the floor (%d)! Show? (y/N):' % len(errors)
+                option = six.moves.input(message) if not args.force else option
+                if option in ['y','Y']:
+                    for error in errors.items():
+                        print('%s ---> %s' % error )
             break
         elif option in ['n','N']:
             break
         else:
             print('Options available [l]ist, [y]es or [n]o')
 
+def scrub(args):
+    print ('Archiving not implemented yet')
 
-def execute(args):
-    filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
-                       args.max_depth)
-    print 'hi'
-    if args.command == 'list':
-        return print_filelist(filelist)
-    elif args.command == 'clean':
-        return _clean(filelist)
-    elif args.command == 'archive':
-        print('Archiving not implemented yet')
+def archive(args):
+    print('Archiving not implemented yet')
+
+
+parser_list.set_defaults(func=list_files)
+parser_clean.set_defaults(func=clean)
+parser_scrub.set_defaults(func=scrub)
+parser_archive.set_defaults(func=archive)
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    execute(args)
+    args.func(args)

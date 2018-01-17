@@ -7,10 +7,11 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)+'..' ))
 
-from vacuum.command import execute, parser
+from vacuum.command import parser
 
 def main():
-    execute(parser.parse_args())
+    args = parser.parse_args()
+    args.func(args)
 
 if __name__ == '__main__':
     main()

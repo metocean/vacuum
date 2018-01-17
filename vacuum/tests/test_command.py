@@ -3,15 +3,16 @@ import mock
 import tempfile
 import shutil
 import datetime
+import pytest
+import unittest
 
-from ..command import execute, parser
+from ..command import parser
 from ..utils import timestamp
 
-@mock.patch('vacuum.command.print_filelist')
-def test_list_command_with_pattern(pflist):
-    args = parser.parse_args(['-p','var','list','/'])
-    execute(args)
-    pflist.assert_called()
+def test_list_command_with_pattern():
+    args = parser.parse_args(['list','/','-p','var'])
+    files = args.func(args)
+    assert '/var' in files
 
 @mock.patch('vacuum.utils.getmtime')
 def test_list_older_then(getmtime):
@@ -19,28 +20,42 @@ def test_list_older_then(getmtime):
                             - datetime.timedelta(days=11))
     with tempfile.NamedTemporaryFile() as tmpfile:
         fname = basename(tmpfile.name)
-        args = parser.parse_args(['-p',fname,'-o','10d','list',
-                                  tempfile.gettempdir()])
-        found = execute(args) 
+        args = parser.parse_args(['list', tempfile.gettempdir(),
+                                  '-p',fname,'-o','10d',])
+        found = args.func(args) 
         assert found
-        args = parser.parse_args(['-p',fname,'-o','12d','list',
-                                  tempfile.gettempdir()])
-        found = execute(args) 
+        args = parser.parse_args(['list', tempfile.gettempdir(),
+                                  '-p',fname,'-o','12d',])
+        found = args.func(args) 
         assert not found
 
-def test_clean_files_with_pattern():
-    files = []
-    rootdir = tempfile.mkdtemp()
-    try:
+class CleanFilesTestCase(unittest.TestCase):
+    def setUp(self):
+        self.rootdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.rootdir)
+
+    def test_clean_files_with_pattern(self):
+        files = []
         for i in range(5):
-            tmpfile = tempfile.NamedTemporaryFile(dir=rootdir,
+            tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
                                                   suffix='test_clean')
             tmpfile.file.close()
             files.append(tmpfile.name)
             assert exists(tmpfile.name)
-        args = parser.parse_args(['-f','-p','test_clean','clean',rootdir])
-        execute(args)
+        args = parser.parse_args(['clean',self.rootdir,'-f','-p','test_clean',])
+        args.func(args)
         assert not all([exists(f) for f in files])
-    finally:
-        shutil.rmtree(rootdir)
 
+    @mock.patch('os.remove', side_effect=OSError('Not permitted'))
+    def test_clean_files_with_errors(self, remove):
+        files = []
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
+                                              suffix='test_clean')
+        tmpfile.file.close()
+
+        files.append(tmpfile.name)
+        args = parser.parse_args(['clean',self.rootdir,'-f'])
+        args.func(args)
+        assert all([exists(f) for f in files])
