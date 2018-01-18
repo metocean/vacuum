@@ -1,9 +1,14 @@
 import os
+import sys
 import argparse
 import pprint 
 import six
+import logging
+
+
 
 from .utils import flister, delete
+from .scrub import WhaleScrubber
 
 parser = argparse.ArgumentParser()
 
@@ -87,8 +92,37 @@ def clean(args):
         else:
             print('Options available [l]ist, [y]es or [n]o')
 
+parser_scrub.add_argument('target', choices=['images', 'containers'])
+parser_scrub.add_argument('-i','--ignore', help="Names RE patterns to ignore",
+                          action='append')
+parser_scrub.add_argument('--filter', help="Add filter values for image/containers",
+                          action='append')
+parser_scrub.add_argument('-f','--force', help="Force removal of images or containers",
+                          action='store_true')
+
 def scrub(args):
-    print ('Archiving not implemented yet')
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    config = {
+            'ignore': args.ignore or [],
+            'filters': [dict(v.split('=') for v in args.filter)] if args.filter else {},
+            'force' : args.force,
+        }
+    scrubber = WhaleScrubber(logger=logger)
+    if args.target == 'images':
+        scrubber.images = config
+    elif args.target == 'containers':
+        scrubber.containers = config
+    scrubber.run()
+
+parser_scrub.set_defaults(func=scrub)
 
 def archive(args):
     print('Archiving not implemented yet')

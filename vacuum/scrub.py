@@ -41,21 +41,21 @@ class WhaleScrubber(object):
         tag = ','.join(image.tags) or image.id
         try:
             if self._not_matches_ignores(ignores, image.tags):
-                self.logger.debug('Removing image (%s)...' % tag)
+                self.logger.debug('Scrubbing image (%s)...' % tag)
                 self.client.images.remove(image.id, force=force)
-                self.logger.info('Image (%s) removed!' % tag)
-        except docker.APIError as exc:
-            self.logger.warning('Image (%s) not removed: %s' %\
+                self.logger.info('Ahoy! Image scrubbed: (%s)' % tag)
+        except docker.errors.APIError as exc:
+            self.logger.warning('Arrgh! Sticky image (%s): %s' %\
                                              (tag,exc.explanation))
 
     def _maybe_remove_container(self, container, force, ignores=[]):
         try:
             if self._not_matches_ignores(ignores, container.name):
-                self.logger.debug('Removing container (%s)...' % container.name)
+                self.logger.debug('Scrubbing (%s) container ...' % container.name)
                 container.remove(force=force)
-                self.logger.info('Container (%s) removed!' % container.name)
+                self.logger.info('Ahoy! Container scrubbed: (%s)' % container.name)
         except docker.errors.APIError as exc:
-            self.logger.warning('Container (%s) could not be removed: %s' %\
+            self.logger.warning('Arrgh! Sticky container (%s): %s' %\
                                          (container.name, exc.explanation))
 
     def _created_before_then(self, containers, older_then):
@@ -78,6 +78,12 @@ class WhaleScrubber(object):
             for ifilter in filters:
                 name = ifilter.pop('name', None)
                 images.extend(self.client.images.list(name=name, filters=ifilter))
+
+        if images:
+            self.logger.info('Scrubbing images...')
+        else:
+            self.logger.info('Blimey! No fouling images to scrub for the giving filters.')
+
         for image in images:
             self._maybe_remove_image(image, force, ignores)
 
@@ -94,14 +100,16 @@ class WhaleScrubber(object):
                 if older_then:
                     filtered = self._created_before_then(filtered, older_then)
                 containers.extend(filtered)
-                
+        if containers:
+            self.logger.info('Scrubbing containers...')
+        else:
+            self.logger.info('Blimey! No fouling containers to scrub for the giving filters.')
+
         for container in containers:
             self._maybe_remove_container(container, force, ignores)
     
     def run(self):
         if self.containers:
-            self.logger.info('Scrubbing containers...')
             self._clean_containers(**self.containers)
         if self.images:
-            self.logger.info('Scrubbing images...')
             self._clean_images(**self.images)
