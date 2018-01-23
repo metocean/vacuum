@@ -1,3 +1,17 @@
+archive:
+    some_archive_rule_name:
+        rootdir: /data/roms/*/* # <--- directory glob matching pattern
+        destination: /archive # destination root directory to archive
+        root_depth: 2 # preserve directory tree from after root_depth level. Default 0
+        compress_level: 4
+        older_then: 60d
+        date_from_filename_format: %Y%m%d
+        time_from_filename_format: %Hz
+        recursive: True
+        max_depth: 2
+        patterns: # <- RE filters to include
+            - .+\.txt
+
 clean:
     some_rule_name:
         rootdir: /data # <--- directory glob matching pattern
@@ -5,21 +19,15 @@ clean:
         date_from_filename_format: %Y%m%d
         time_from_filename_format: %Hz
         recursive: True
+        max_depth: 2
         patterns: # <- RE filters to include
             - .+\.txt
-        subfolders:
-            "roms/.": # <-- RE search pattern
-                older_then: 50d
-                patterns: # default to all the files
-                    - 's[o|O]me RE'
-                    - 's[o|O]me RE 2'
-
-    "/data":
-        older_then: 30d
+    some_other_rule:
+        rootdir: '/data/roms/*'
         recursive: True
-
-archive:
-
+        max_depth: 4
+        patterns:
+            - '\.nc$'
 
 docker_prune:
     images:  

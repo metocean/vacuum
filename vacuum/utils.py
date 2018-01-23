@@ -95,14 +95,14 @@ def follow_links(path):
             linkpath = os.path.join(basedir, linkto)
             return follow(linkpath)
     
-def flister(root=None, patterns=None, older=None, recursive=False, max_depth=1,
-            depth=1):
+def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=1,
+            depth=1, **kwargs):
     """
-    Genrates a list of files and dirs giving root directory and a 
+    Genrates a list of files and dirs giving `rootdir` directory and a 
     list of matching RE patterns. Also filters for files `older` then
     a period parseable by py-timeparser.
     """
-    root = root or abspath('.')
+    rootdir = rootdir or abspath('.')
     if not isinstance(patterns, (tuple,list)):
         patterns = [patterns or '.+']
 
@@ -113,7 +113,7 @@ def flister(root=None, patterns=None, older=None, recursive=False, max_depth=1,
     
     then = pastdt(older) if older is not None else None
     
-    for filepath in iglob(join(root,'*')):
+    for filepath in iglob(join(rootdir,'*')):
         filename = basename(filepath)
         for patt in compiled:
             if patt.match(filename):
@@ -126,7 +126,7 @@ def flister(root=None, patterns=None, older=None, recursive=False, max_depth=1,
                                         depth+1):
                     yield filepath    
 
-def delete(filelist, raise_errors=False):
+def delete(filelist, raise_errors=False, **kwargs):
     """
     Delete a list of files and directories
     """
