@@ -13,8 +13,8 @@ from os.path import *
 from glob import iglob
 
 __all__ = ['flister', 'older_then', 'pastdt', 
-           'delete', 'follow_links','path2dt',
-           'timestamp']
+           'delete', 'path2dt',
+           'timestamp','archive']
 
 DATE_RE = re.compile('(20|19)\d{6}')
 HOURMIN_RE = re.compile('\d{4}z')
@@ -77,24 +77,7 @@ def older_then(filepath, then, datetime_from_filepath=False):
         return True if mtime < then else False
     else:
         return False
-
-def follow_links(path):
-    def follow(linkto):
-        if os.path.isfile(linkto) or os.path.isdir(linkto):
-            return linkto
-        elif os.path.islink(linkto):
-            return follow_links(linkto)
-        else:
-            return path
-    if os.path.islink(path):
-        linkto = os.readlink(path)
-        if linkto.startswith('/'):
-            return follow(linkto)
-        else:
-            basedir = os.path.dirname(path)
-            linkpath = os.path.join(basedir, linkto)
-            return follow(linkpath)
-    
+   
 def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=1,
             depth=1, **kwargs):
     """
@@ -130,8 +113,6 @@ def delete(filelist, raise_errors=False, **kwargs):
     """
     Delete a list of files and directories
     """
-    deleted_dirs = []
-    deleted_files = []
     errors = {}
     success_files, success_directories = [], []
     for filepath in filelist:
@@ -149,12 +130,28 @@ def delete(filelist, raise_errors=False, **kwargs):
         raise Exception(message)
     return success_files, success_directories, errors
 
-def archive(filelist, destination, follow_links=False, ignore=[]):
-    ignore_func = ignore_paterns(*ignore) if ignore else None
+def maybe_create_dirs(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno not in [17]:
+            raise
+
+def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
+    errors = {}
+    success_files, success_directories = [], []
     for filepath in filelist:
-        if isdir(filepath):
-            shutil.copytree(filepath, destination, ignore=ignore_func)
-        elif isfile(filepath):
-            shutil.move(filepath, destination)
-        elif follow_links and islink(filepath):
-            basename()
+        try:
+            if root_depth:
+                branch = dirname(filepath.split(os.sep, root_depth+1)[-1])
+                destination = join(destination, branch)
+            maybe_create_dirs(destination)
+            assert isdir(destination)
+            if isfile(filepath) or islink(filepath):
+                shutil.move(filepath, destination)
+        except Exception as exc:
+            errors[filepath] = exc
+    message = 'Some files (%d) could not be archived' % len(errors)        
+    if errors and raise_errors:
+        raise Exception(message)  
+    return success_files, success_directories, errors

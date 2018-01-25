@@ -6,39 +6,44 @@ import logging
 
 from .utils import *
 
-class VaccumCleaner(object):
+class VacuumCleaner(object):
     """Wrapper to perform cleaning/archive operations"""
     def __init__(self, clean=None, archive=None, logger=logging):
-        super(VaccumCleaner, self).__init__()
+        super(VacuumCleaner, self).__init__()
         self.clean = clean
         self.archive = archive
+        self.logger = logger
 
-    def _clean(self):
-        if isinstance(self.clean, (list,tuple)):
-            rules = enumerate(self.clean)
-        elif isinstance(self.clean, dict):
-            rules = self.clean.items()
+    def _prepare_rules(self, rules):
+        if isinstance(rules, (list,tuple)):
+            return enumerate(rules)
+        elif isinstance(rules, dict):
+            if 'rootdir' in rules:
+                return [('single', rules)]
+            else:
+                return rules.items()
         else:
-            self.logging.info('There is no cleaning rules to be applied')
-            return
+            raise Exception('Archive and Cleaning rules must a dict or list of rules')
 
+    def _archive_or_clean(self, operation, rules):
+        rules = self._prepare_rules(rules)
         for rule_id, options in rules:
-            self.logger.info('Processing cleanup of %s rule'%rule_id)
+            self.logger.info('Processing %s of %s rule'% (operation.func_name, 
+                                                          rule_id))
             filelist = flister(**options)
-            success_files, success_dirs, errors = delete(filelist, **options)
-            self.logger.info('Cleanup of %s complete: %d files and %d directories deleted' %\
-                                        (len(success_files),len(success_dirs)))
-            if self.errors:
-                self.logger.warning('Could not delete some files, please check below...'+os.linesep+'%s'%
-                    os.linesep.join(['%s: %s' % i for i in errors.items()])
-
-    def _archive(self):
-        pass
+            success_files, success_dirs, errors = operation(filelist, **options)
+            self.logger.info('%s of %s complete: %d files and %d directories deleted' %\
+                (operation.func_name.title(),rule_id,len(success_files),len(success_dirs)))
+            if errors:
+                self.logger.warning('Could not %s some files, please check below...' % \
+                                                            operation.func_name\
+                                                            +os.linesep+'%s'%\
+                        os.linesep.join(['%s: %s' % i for i in errors.items()]))
 
     def run(self):
         if self.archive:
-            self._archive()
+            self._archive_or_clean(archive, self.archive)
 
         if self.clean:
-            self._clean()
+            self._archive_or_clean(delete, self.clean)
         

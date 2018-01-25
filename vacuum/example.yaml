@@ -2,22 +2,21 @@ archive:
     some_archive_rule_name:
         rootdir: /data/roms/*/* # <--- directory glob matching pattern
         destination: /archive # destination root directory to archive
-        root_depth: 2 # preserve directory tree from after root_depth level. Default 0
-        compress_level: 4
+        root_depth: 2 # preserve directory tree after root_depth level. Default 0 which will not preserve tree structure
         older_then: 60d
-        date_from_filename_format: %Y%m%d
-        time_from_filename_format: %Hz
+        date_strptime: %Y%m%d
+        time_strptime: %Hz
         recursive: True
         max_depth: 2
         patterns: # <- RE filters to include
-            - .+\.txt
+            - .+\.txt # same as *.txt in shell
 
 clean:
     some_rule_name:
         rootdir: /data # <--- directory glob matching pattern
         older_then: 60d
-        date_from_filename_format: %Y%m%d
-        time_from_filename_format: %Hz
+        date_strptime: %Y%m%d
+        time_strptime: %Hz
         recursive: True
         max_depth: 2
         patterns: # <- RE filters to include
@@ -29,7 +28,7 @@ clean:
         patterns:
             - '\.nc$'
 
-docker_prune:
+scrub:
     images:  
         ignore: # Accept list of image names or matching RE
             - !!python/object/apply:scheduler.core.get_active_images [] # A function that generates a list of image names

@@ -106,3 +106,38 @@ def test_datetime_from_filename_parser():
     expected = datetime.datetime(2018,1,13,0)
     assert path2dt(example) == expected
 
+
+
+def test_archive_simple():
+    tmpdir = tempfile.mkdtemp()
+    try:
+        _, tmpfile = tempfile.mkstemp()
+        basename = os.path.basename(tmpfile)
+        archive([tmpfile], tmpdir)
+        assert not os.path.exists(tmpfile)
+        assert os.path.exists(os.path.join(tmpdir, basename))
+    finally:
+        shutil.rmtree(tmpdir)
+
+
+def test_archive_preserve_root():
+    tmpdir0 = tempfile.mkdtemp()
+    tmpdir1 = tempfile.mkdtemp(dir=tmpdir0)
+    tmpdir2 = tempfile.mkdtemp(dir=tmpdir1)
+    tmpdir3 = tempfile.mkdtemp(dir=tmpdir2)
+
+    dest = tempfile.mkdtemp()
+    try:
+        for root_depth in range(1,5):
+            _, tmpfile = tempfile.mkstemp(dir=tmpdir3)
+            archive([tmpfile], dest, root_depth=root_depth)
+            basename = tmpfile.split(os.sep, root_depth+1)[-1]
+            assert os.path.exists(os.path.join(dest, basename))
+        root_depth = 5
+        _, tmpfile = tempfile.mkstemp(dir=tmpdir3)
+        archive([tmpfile], dest, root_depth=root_depth)
+        basename = os.path.basename(tmpfile)
+        assert os.path.exists(os.path.join(dest, basename))
+    finally:
+        shutil.rmtree(tmpdir0)
+        shutil.rmtree(dest)

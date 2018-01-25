@@ -22,7 +22,7 @@ parser_archive = subparser.add_parser('archive', help='Archive files and directo
 recursive_args = []
 
 
-for sub in [parser_list, parser_clean]:
+for sub in [parser_list, parser_clean, parser_archive]:
     sub.add_argument('-r','--recursive', 
                         help='Find files inside sub-folders recursivelly',
                         action='store_true')
@@ -41,19 +41,26 @@ for sub in [parser_list, parser_clean]:
                         type=int)
     sub.add_argument('root', help='Root directory to search files for')
 
-parser_clean.add_argument('-f','--force', help="Don't prompt for confirmation",
+for sub in [parser_clean, parser_archive]:
+    sub.add_argument('-f','--force', help="Don't prompt for confirmation",
                         action='store_true')
 
+parser_archive.add_argument('--root_depth', 
+                            help="Preserve directory tree from `root_depth`. Default: Don't preserve",
+                            default=0)
+parser_archive.add_argument('destination', 
+                            help='Destination directory to archive files at')
+
 def list_files(args=None, filelist=None):
-    filelist = filelist or flister(args.root, args.pattern, args.older_then, args.recursive, 
-                                   args.max_depth)
+    filelist = filelist or flister(args.root, args.pattern, args.older_then, 
+                                   args.recursive, args.max_depth)
     files = []
     for filepath in filelist:
         print(filepath)
         files.append(filepath)
     return files
 
-def clean(args):
+def clean_or_archive(operation, args, opargs=[]):
     filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
                        args.max_depth)
     try: 
@@ -72,8 +79,8 @@ def clean(args):
             list_files(filelist=[first_file])
             list_files(filelist=filelist)
         elif option in ['y','Y']:
-            files0, dirs0, errors0 = delete([first_file])
-            files, dirs, errors = delete(filelist)
+            files0, dirs0, errors0 = operation([first_file],*opargs)
+            files, dirs, errors = operation(filelist,*opargs)
             errors.update(errors0)
             if files:
                 print('Successfully vacuum-cleaned %d files and %d directories!' %\
@@ -81,7 +88,7 @@ def clean(args):
                                                   len(dirs+dirs0)))
             if errors:
 
-                message = 'Oh no! Some dust seems glued to the floor (%d)! Show? (y/N):' % len(errors)
+                message = 'Oh no! Some dust still glued to the floor (%d)! Show? (y/N):' % len(errors)
                 option = six.moves.input(message) if not args.force else option
                 if option in ['y','Y']:
                     for error in errors.items():
@@ -124,9 +131,11 @@ def scrub(args):
 
 parser_scrub.set_defaults(func=scrub)
 
-def archive(args):
-    print('Archiving not implemented yet')
+def clean(args):
+    clean_or_archive(delete, args)
 
+def archive(args):
+    clean_or_archive(archive, args, args.root_depth)
 
 parser_list.set_defaults(func=list_files)
 parser_clean.set_defaults(func=clean)
