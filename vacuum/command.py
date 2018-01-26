@@ -39,6 +39,16 @@ for sub in [parser_list, parser_clean, parser_archive]:
                         action='store',
                         default=1,
                         type=int)
+    sub.add_argument('--date_strptime', 
+                        help='Date strptime formatting for use as older_then',
+                        action='store',
+                        default=None,
+                        type=str)
+    sub.add_argument('--time_strptime', 
+                        help='Time strptime formatting for use as older_then',
+                        action='store',
+                        default=None,
+                        type=str)
     sub.add_argument('root', help='Root directory to search files for')
 
 for sub in [parser_clean, parser_archive]:
@@ -53,7 +63,8 @@ parser_archive.add_argument('destination',
 
 def list_files(args=None, filelist=None):
     filelist = filelist or flister(args.root, args.pattern, args.older_then, 
-                                   args.recursive, args.max_depth)
+                                   args.recursive, args.max_depth,
+                                   args.date_strptime, args.time_strptime)
     files = []
     for filepath in filelist:
         print(filepath)
@@ -62,7 +73,7 @@ def list_files(args=None, filelist=None):
 
 def clean_or_archive(operation, args, opargs=[]):
     filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
-                       args.max_depth)
+                       args.max_depth, args.date_strptime, args.time_strptime)
     try: 
         first_file = filelist.next()
     except StopIteration: 

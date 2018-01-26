@@ -16,14 +16,30 @@ __all__ = ['flister', 'older_then', 'pastdt',
            'delete', 'path2dt',
            'timestamp','archive']
 
-DATE_RE = re.compile('(20|19)\d{6}')
-HOURMIN_RE = re.compile('\d{4}z')
-HOUR_RE = re.compile('\d{2}z')
-DATE_STRPTIME = '%Y%m%d'
-HOURMIN_STRPTIME = '%H%Mz'
-HOUR_STRPTIME = '%Hz'
+STRPTIME_RE = re.compile('\%[YymdHMSaAwbBIpfzZjUW]')
 
-def path2dt(filepath):
+STPTIME_TO_RE = {
+    '%Y' : '(19|20)\d{2}',
+    '%p': '(AM|PM|am|pm)',
+    '%f': '\d{6}',
+    '%j': '\d{3}',
+    '%Z': '[A-Z]{3,5}',
+    '%z': '(\+|\-)\d{4}',
+}
+
+for i in ['%y','%m','%d','%H','%M','%S','%W']:
+    STPTIME_TO_RE[i] = '\d{2}'
+
+
+def strptime_re(strptime):
+    prepattern = []
+    repattern = []
+    for i in STRPTIME_RE.findall(strptime):
+        strptime = re.sub(i, STPTIME_TO_RE[i], strptime)
+    return re.compile(strptime)
+
+
+def path2dt(filepath, date_strptime, time_strptime=None):
     """
     Parse datetime from the filepath following some pre-defined search re and
     format.
@@ -32,22 +48,20 @@ def path2dt(filepath):
  
     return: datetime object if find date (and time) and None if no match
     """
-    finddate = DATE_RE.search(filepath)
+    finddate = strptime_re(date_strptime).search(filepath)
     if finddate:
-        date_obj = datetime.datetime.strptime(finddate.group(), DATE_STRPTIME)
-        findhourmin = HOURMIN_RE.search(filepath)
-        time_obj = date_obj.time()
-        if findhourmin:
-            time_obj = datetime.datetime.strptime(findhourmin.group(),
-                                                     HOURMIN_STRPTIME).time()
-        else:
-            findhour = HOUR_RE.search(filepath)
-            if findhour:
-                time_obj = datetime.datetime.strptime(findhour.group(),
-                                                      HOUR_STRPTIME).time()
-        timedelta_obj = datetime.timedelta(hours=time_obj.hour,
-                                           minutes=time_obj.minute)
-        return date_obj + timedelta_obj
+        date_obj = datetime.datetime.strptime(finddate.group(), date_strptime)
+        if time_strptime:            
+            findtime = strptime_re(time_strptime).search(filepath)
+            if findtime:
+                time_obj = datetime.datetime.strptime(findtime.group(),
+                                                      time_strptime).time()
+                timedelta_obj = datetime.timedelta(hours=time_obj.hour,
+                                                   minutes=time_obj.minute,
+                                                   seconds=time_obj.second,
+                                                   microseconds=time_obj.microsecond)
+                date_obj = date_obj + timedelta_obj
+        return date_obj
 
 def timestamp(dtobj):
     if six.PY2:
@@ -65,21 +79,21 @@ def pastdt(parseable, utc=False):
         return datetime.datetime.utcnow()-then
     else:
         return datetime.datetime.now()-then 
-def older_then(filepath, then, datetime_from_filepath=False):
+
+def older_then(filepath, then, date_strptime=None, time_strptime=None):
     """ 
     Verify if a file is older `then` a giving datetime object
     """
     if os.path.exists(filepath):
-        if datetime_from_filepath:
-            mtime = path2dt(filepath)
-        else:    
-            mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
+        mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
+        if date_strptime:
+            mtime = path2dt(filepath, date_strptime, time_strptime) or mtime
         return True if mtime < then else False
     else:
         return False
    
 def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=1,
-            depth=1, **kwargs):
+            depth=1, date_strptime=None, time_strptime=None, **kwargs):
     """
     Genrates a list of files and dirs giving `rootdir` directory and a 
     list of matching RE patterns. Also filters for files `older` then
@@ -101,7 +115,7 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
         for patt in compiled:
             if patt.match(filename):
                 if older is None or (older is not None \
-                                     and older_then(filepath, then)):        
+                and older_then(filepath, then, date_strptime, time_strptime)):        
                     yield filepath
             if recursive and depth < max_depth and os.path.isdir(filepath) :
                 for filepath in flister(filepath, patterns, older, 

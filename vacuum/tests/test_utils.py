@@ -96,17 +96,15 @@ def test_delete_error_print(rmtree):
 def test_datetime_from_filename_parser():
     example = '/data/wrf/gfs_nz8km/wrf20180114/nz_8km_06z.GrbF042'
     expected = datetime.datetime(2018,1,14,6)
-    assert path2dt(example) == expected
+    assert path2dt(example, date_strptime='%Y%m%d',time_strptime='%Hz') == expected
 
     example = '/data/ww3/gfs_glob-st4/ww320180112_18z/glob20180112T18.nc'
     expected = datetime.datetime(2018,1,12,18)
-    assert path2dt(example) == expected
+    assert path2dt(example, date_strptime='%Y%m%d_%Hz') == expected
 
     example = '/data/kd490/global/modisa20180113/A2018013.L3m_DAY_KD490_Kd_490_4km.nc'
     expected = datetime.datetime(2018,1,13,0)
-    assert path2dt(example) == expected
-
-
+    assert path2dt(example, date_strptime='%Y%m%d') == expected
 
 def test_archive_simple():
     tmpdir = tempfile.mkdtemp()
