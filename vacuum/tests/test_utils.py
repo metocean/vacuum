@@ -74,6 +74,15 @@ def test_delete_dir():
     delete([tmpdir])
     assert not os.path.isdir(tmpdir)
 
+def test_delete_empty_dir():
+    tmpdir = tempfile.mkdtemp()
+    _,tmpfile = tempfile.mkstemp(dir=tmpdir)
+    delete([tmpfile], delete_empty=False)
+    assert os.path.isdir(tmpdir)
+    _,tmpfile = tempfile.mkstemp(dir=tmpdir)
+    delete([tmpfile], delete_empty=True)
+    assert not os.path.isdir(tmpdir)
+
 @mock.patch('shutil.rmtree')
 def test_delete_error(rmtree):
     tmpdir = tempfile.mkdtemp()

@@ -67,7 +67,7 @@ def timestamp(dtobj):
     if six.PY2:
         return time.mktime(dtobj.timetuple())+dtobj.microsecond/1e6
     elif six.PY3:
-        return dtobj.timetuple()
+        return dtobj.timestamp()
 
 def pastdt(parseable, utc=False):
     '''
@@ -84,7 +84,9 @@ def older_then(filepath, then, date_strptime=None, time_strptime=None):
     """ 
     Verify if a file is older `then` a giving datetime object
     """
-    if os.path.exists(filepath):
+    if then is None:
+        return True
+    elif os.path.exists(filepath):
         mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
         if date_strptime:
             mtime = path2dt(filepath, date_strptime, time_strptime) or mtime
@@ -113,17 +115,21 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
     for filepath in iglob(join(rootdir,'*')):
         filename = basename(filepath)
         for patt in compiled:
-            if patt.match(filename):
-                if older is None or (older is not None \
-                and older_then(filepath, then, date_strptime, time_strptime)):        
-                    yield filepath
-            if recursive and depth < max_depth and os.path.isdir(filepath) :
+            if isfile(filepath) and patt.match(filename) and older_then(filepath,
+                                                                then, 
+                                                                date_strptime,
+                                                                time_strptime): 
+                yield filepath
+            elif isdir(filepath) and recursive and depth < max_depth:
                 for filepath in flister(filepath, patterns, older, 
                                         recursive, max_depth, 
-                                        depth+1):
+                                        depth+1,date_strptime,
+                                        time_strptime):
                     yield filepath    
 
-def delete(filelist, raise_errors=False, **kwargs):
+def delete(filelist, raise_errors=False, 
+           delete_empty=False,
+           **kwargs):
     """
     Delete a list of files and directories
     """
@@ -137,6 +143,9 @@ def delete(filelist, raise_errors=False, **kwargs):
             elif isfile(filepath):
                 os.remove(filepath)
                 success_files.append(filepath)
+            if delete_empty:
+                remove_if_empty(dirname(filepath))
+
         except Exception as exc:
             errors[filepath] = exc
     message = 'Some files (%d) could not be deleted' % len(errors)
@@ -150,6 +159,12 @@ def maybe_create_dirs(path):
     except OSError as exc:
         if exc.errno not in [17]:
             raise
+
+def remove_if_empty(dirpath):
+    try:
+        os.rmdir(dirpath)
+    except:
+        pass
 
 def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
     errors = {}

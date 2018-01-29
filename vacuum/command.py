@@ -51,6 +51,10 @@ for sub in [parser_list, parser_clean, parser_archive]:
                         type=str)
     sub.add_argument('root', help='Root directory to search files for')
 
+parser_clean.add_argument('-e','--empty', 
+                          help='Delete empty folders as well',
+                          action='store_true')
+
 for sub in [parser_clean, parser_archive]:
     sub.add_argument('-f','--force', help="Don't prompt for confirmation",
                         action='store_true')
@@ -64,18 +68,21 @@ parser_archive.add_argument('destination',
 def list_files(args=None, filelist=None):
     filelist = filelist or flister(args.root, args.pattern, args.older_then, 
                                    args.recursive, args.max_depth,
-                                   args.date_strptime, args.time_strptime)
+                                   date_strptime=args.date_strptime, 
+                                   time_strptime=args.time_strptime)
     files = []
     for filepath in filelist:
         print(filepath)
         files.append(filepath)
     return files
 
-def clean_or_archive(operation, args, opargs=[]):
+def clean_or_archive(operation, args, **opargs):
     filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
-                       args.max_depth, args.date_strptime, args.time_strptime)
+                       args.max_depth, 
+                       date_strptime=args.date_strptime, 
+                       time_strptime=args.time_strptime)
     try: 
-        first_file = filelist.next()
+        first_file = next(filelist)
     except StopIteration: 
         print('Floor is shining, nothing to clean!')
         return
@@ -90,8 +97,8 @@ def clean_or_archive(operation, args, opargs=[]):
             list_files(filelist=[first_file])
             list_files(filelist=filelist)
         elif option in ['y','Y']:
-            files0, dirs0, errors0 = operation([first_file],*opargs)
-            files, dirs, errors = operation(filelist,*opargs)
+            files0, dirs0, errors0 = operation([first_file],**opargs)
+            files, dirs, errors = operation(filelist,**opargs)
             errors.update(errors0)
             if files:
                 print('Successfully vacuum-cleaned %d files and %d directories!' %\
@@ -143,10 +150,10 @@ def scrub(args):
 parser_scrub.set_defaults(func=scrub)
 
 def clean(args):
-    clean_or_archive(delete, args)
+    clean_or_archive(delete, args, delete_empty=args.empty)
 
 def archive(args):
-    clean_or_archive(archive, args, args.root_depth)
+    clean_or_archive(archive, args, root_depth=args.root_depth)
 
 parser_list.set_defaults(func=list_files)
 parser_clean.set_defaults(func=clean)

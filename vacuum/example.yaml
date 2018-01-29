@@ -15,6 +15,7 @@ clean:
     some_rule_name:
         rootdir: /data # <--- directory glob matching pattern
         older_then: 60d
+        delete_empty: true # Delete empty folders
         date_strptime: %Y%m%d
         time_strptime: %Hz
         recursive: True

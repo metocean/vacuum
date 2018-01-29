@@ -28,15 +28,15 @@ class VacuumCleaner(object):
     def _archive_or_clean(self, operation, rules):
         rules = self._prepare_rules(rules)
         for rule_id, options in rules:
-            self.logger.info('Processing %s of %s rule'% (operation.func_name, 
+            self.logger.info('Processing %s of %s rule'% (operation.__name__, 
                                                           rule_id))
             filelist = flister(**options)
             success_files, success_dirs, errors = operation(filelist, **options)
             self.logger.info('%s of %s complete: %d files and %d directories deleted' %\
-                (operation.func_name.title(),rule_id,len(success_files),len(success_dirs)))
+                (operation.__name__.title(),rule_id,len(success_files),len(success_dirs)))
             if errors:
                 self.logger.warning('Could not %s some files, please check below...' % \
-                                                            operation.func_name\
+                                                            operation.__name__\
                                                             +os.linesep+'%s'%\
                         os.linesep.join(['%s: %s' % i for i in errors.items()]))
 

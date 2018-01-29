@@ -10,9 +10,9 @@ from ..command import parser
 from ..utils import timestamp
 
 def test_list_command_with_pattern():
-    args = parser.parse_args(['list','/','-p','var'])
+    args = parser.parse_args(['list','/var/log','-p','.+\.log'])
     files = args.func(args)
-    assert '/var' in files
+    assert files
 
 @mock.patch('vacuum.utils.getmtime')
 def test_list_older_then(getmtime):
@@ -34,7 +34,8 @@ class CleanFilesTestCase(unittest.TestCase):
         self.rootdir = tempfile.mkdtemp()
 
     def tearDown(self):
-        shutil.rmtree(self.rootdir)
+        if exists(self.rootdir): 
+            shutil.rmtree(self.rootdir)
 
     def test_clean_files_with_pattern(self):
         files = []
@@ -59,3 +60,13 @@ class CleanFilesTestCase(unittest.TestCase):
         args = parser.parse_args(['clean',self.rootdir,'-f'])
         args.func(args)
         assert all([exists(f) for f in files])
+
+    def test_clean_remove_empty(self):
+        files = []
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
+                                              suffix='test_clean')
+        tmpfile.file.close()
+        files.append(tmpfile.name)
+        args = parser.parse_args(['clean',self.rootdir,'-fe'])
+        args.func(args)
+        assert not exists(self.rootdir)
