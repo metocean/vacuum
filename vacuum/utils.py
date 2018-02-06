@@ -93,11 +93,19 @@ def older_then(filepath, then, date_strptime=None, time_strptime=None):
         return True if mtime < then else False
     else:
         return False
+
+def str2re(patterns):
+    compiled = []
+    for patt in  patterns:
+        assert isinstance(patt, six.string_types), 'Each pattern must be a string type'
+        compiled.append(re.compile(patt))
+    return compiled
+
    
 def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=1,
             depth=1, date_strptime=None, time_strptime=None, **kwargs):
     """
-    Genrates a list of files and dirs giving `rootdir` directory and a 
+    Genrates a list of files giving a `rootdir` and a 
     list of matching RE patterns. Also filters for files `older` then
     a period parseable by py-timeparser.
     """
@@ -105,27 +113,22 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
     if not isinstance(patterns, (tuple,list)):
         patterns = [patterns or '.+']
 
-    compiled = []
-    for patt in  patterns:
-        assert isinstance(patt, six.string_types), 'Each pattern must be a string type'
-        compiled.append(re.compile(patt))
-    
+    compiled = str2re(patterns)
+
     then = pastdt(older) if older is not None else None
     
     for filepath in iglob(join(rootdir,'*')):
         filename = basename(filepath)
-        for patt in compiled:
-            if isfile(filepath) and patt.match(filename) and older_then(filepath,
-                                                                then, 
-                                                                date_strptime,
-                                                                time_strptime): 
+        for pattern in compiled:
+            if isfile(filepath) and pattern.match(filename) and older_then(filepath,
+                                            then, date_strptime,time_strptime): 
                 yield filepath
             elif isdir(filepath) and recursive and depth < max_depth:
                 for filepath in flister(filepath, patterns, older, 
                                         recursive, max_depth, 
                                         depth+1,date_strptime,
                                         time_strptime):
-                    yield filepath    
+                    yield filepath
 
 def delete(filelist, raise_errors=False, 
            delete_empty=False,
