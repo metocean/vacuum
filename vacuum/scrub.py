@@ -11,7 +11,8 @@ class WhaleScrubber(object):
     """
     Perform cleaning operations of images and containers
     """
-    def __init__(self, images={}, containers={}, client=None, logger=logging):
+    def __init__(self, images={}, containers={}, client=None, 
+                 logger=logging, **kwargs):
         super(WhaleScrubber, self).__init__()
         self.client = client or docker.from_env()
         self.logger = logger

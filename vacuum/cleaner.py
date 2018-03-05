@@ -8,7 +8,7 @@ from .utils import *
 
 class VacuumCleaner(object):
     """Wrapper to perform cleaning/archive operations"""
-    def __init__(self, clean=None, archive=None, logger=logging):
+    def __init__(self, clean=None, archive=None, logger=logging, **kwargs):
         super(VacuumCleaner, self).__init__()
         self.clean = clean
         self.archive = archive

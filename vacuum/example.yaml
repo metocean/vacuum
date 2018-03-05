@@ -22,6 +22,7 @@ clean:
         max_depth: 2
         patterns: # <- RE filters to include
             - .+\.txt
+
     some_other_rule:
         rootdir: '/data/roms/*'
         recursive: True
