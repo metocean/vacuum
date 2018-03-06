@@ -124,10 +124,14 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
                                             then, date_strptime,time_strptime): 
                 yield filepath
             elif isdir(filepath) and recursive and depth < max_depth:
+                i = 0
                 for filepath in flister(filepath, patterns, older, 
                                         recursive, max_depth, 
                                         depth+1,date_strptime,
                                         time_strptime):
+                    yield filepath
+                if i == 0:
+                    # maybe an empty dir lying around so subject to cleaning
                     yield filepath
 
 def delete(filelist, raise_errors=False, 
