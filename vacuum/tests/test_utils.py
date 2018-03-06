@@ -51,6 +51,14 @@ def test_flister_default():
     assert list(flister(os.path.dirname(__file__)))
     assert not list(flister('/nonexistent'))
 
+def test_flister_empty_dirs():
+    # check if flister yields a empty_dir, but not a non empty_one
+    tmpdir1 = tempfile.mkdtemp()
+    tmpdir11 = tempfile.mkdtemp(dir=tmpdir1)
+    tmpdir12 = tempfile.mkdtemp(dir=tmpdir1)
+    with tempfile.NamedTemporaryFile(prefix='xyz', dir=tmpdir12) as tmpfile1:
+        assert len(list(flister(tmpdir1, 'abc', recursive=True, max_depth=3))) == 1
+
 @mock.patch('vacuum.utils.getmtime')
 def test_flister_older_then(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\

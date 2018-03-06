@@ -125,13 +125,14 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
                 yield filepath
             elif isdir(filepath) and recursive and depth < max_depth:
                 i = 0
-                for filepath in flister(filepath, patterns, older, 
+                for filepath_ in flister(filepath, patterns, older, 
                                         recursive, max_depth, 
                                         depth+1,date_strptime,
                                         time_strptime):
-                    yield filepath
-                if i == 0:
-                    # maybe an empty dir lying around so subject to cleaning
+                    yield filepath_
+                    i += 1
+                if i == 0 and not os.listdir(filepath):
+                    # empty dirs are yielded as well regardless of parameters
                     yield filepath
 
 def delete(filelist, raise_errors=False, 
@@ -142,6 +143,7 @@ def delete(filelist, raise_errors=False,
     """
     errors = {}
     success_files, success_directories = [], []
+    basedirs = set()
     for filepath in filelist:
         try:
             if isdir(filepath):
@@ -150,11 +152,14 @@ def delete(filelist, raise_errors=False,
             elif isfile(filepath):
                 os.remove(filepath)
                 success_files.append(filepath)
-            if delete_empty:
-                remove_if_empty(dirname(filepath))
-
+            basedirs.update([dirname(filepath)])
         except Exception as exc:
             errors[filepath] = exc
+    if delete_empty:
+        for basedir in sorted(list(basedirs), reverse=True):
+            if len(basedir.split(sep)) > 2:
+                remove_if_empty(basedir)
+                success_directories.append(basedir)
     message = 'Some files (%d) could not be deleted' % len(errors)
     if errors and raise_errors:
         raise Exception(message)
