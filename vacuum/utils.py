@@ -12,7 +12,7 @@ import timeparser
 from os.path import *
 from glob import iglob
 
-__all__ = ['flister', 'older_then', 'pastdt', 
+__all__ = ['flister', 'is_older_then', 'pastdt', 
            'delete', 'path2dt',
            'timestamp','archive']
 
@@ -80,7 +80,7 @@ def pastdt(parseable, utc=False):
     else:
         return datetime.datetime.now()-then 
 
-def older_then(filepath, then, date_strptime=None, time_strptime=None):
+def is_older_then(filepath, then, date_strptime=None, time_strptime=None):
     """ 
     Verify if a file is older `then` a giving datetime object
     """
@@ -102,11 +102,11 @@ def str2re(patterns):
     return compiled
 
    
-def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=1,
+def flister(rootdir=None, patterns=None, older_then=None, recursive=False, max_depth=1,
             depth=1, date_strptime=None, time_strptime=None, **kwargs):
     """
     Genrates a list of files giving a `rootdir` and a 
-    list of matching RE patterns. Also filters for files `older` then
+    list of matching RE patterns. Also filters for files `older_then` then
     a period parseable by py-timeparser.
     """
     rootdir = rootdir or abspath('.')
@@ -115,20 +115,20 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
 
     compiled = str2re(patterns)
 
-    then = pastdt(older) if older is not None else None
+    then = pastdt(older_then) if older_then is not None else None
     
     for filepath in iglob(join(rootdir,'*')):
         filename = basename(filepath)
         for pattern in compiled:
-            if isfile(filepath) and pattern.match(filename) and older_then(filepath,
-                                            then, date_strptime,time_strptime): 
+            if isfile(filepath) and pattern.match(filename) and \
+               is_older_then(filepath, then, date_strptime, time_strptime): 
                 yield filepath
             elif islink(filepath) and pattern.match(filename):
                 # yield links that match pattern, links ignore older_then
                 yield filepath
             elif isdir(filepath) and recursive and depth < max_depth:
                 i = 0
-                for filepath_ in flister(filepath, patterns, older, 
+                for filepath_ in flister(filepath, patterns, older_then, 
                                         recursive, max_depth, 
                                         depth+1,date_strptime,
                                         time_strptime):

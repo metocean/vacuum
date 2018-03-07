@@ -5,7 +5,7 @@ import six
 import re
 import datetime
 
-from .utils import older_then, pastdt
+from .utils import pastdt
 
 class WhaleScrubber(object):
     """

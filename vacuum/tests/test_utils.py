@@ -25,8 +25,8 @@ def test_older_then(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\
                             - datetime.timedelta(days=20))
     with tempfile.NamedTemporaryFile() as tmpfile:
-        assert older_then(tmpfile.name, pastdt('15d'))
-        assert not older_then(tmpfile.name, pastdt('21d'))
+        assert is_older_then(tmpfile.name, pastdt('15d'))
+        assert not is_older_then(tmpfile.name, pastdt('21d'))
 
 def test_flister_re():
     with tempfile.NamedTemporaryFile() as tmpfile:
@@ -78,8 +78,8 @@ def test_flister_older_then(getmtime):
     with tempfile.NamedTemporaryFile() as tmpfile:
         filename = os.path.basename(tmpfile.name)
         root = os.path.dirname(tmpfile.name)
-        assert len(list(flister(root, filename, older='2d'))) == 1
-        assert len(list(flister(root, filename, older='10d'))) == 0
+        assert len(list(flister(root, filename, older_then='2d'))) == 1
+        assert len(list(flister(root, filename, older_then='10d'))) == 0
 
 def test_delete_link():
     tmpfile = tempfile.NamedTemporaryFile()
