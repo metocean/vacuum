@@ -36,6 +36,17 @@ def test_flister_re():
         files = list(flister(root, filename))
         assert tmpfile.name in files and len(files) == 1
 
+def test_flister_links():
+    tmpdir1 = tempfile.mkdtemp()
+    with tempfile.NamedTemporaryFile(dir=tmpdir1) as tmpfile:
+        tmpfilelnk = tmpfile.name+'.lnk'
+        os.symlink(tmpfile.name, tmpfilelnk)
+        brknlnk = tmpfile.name+'.broken'+'.lnk'
+        os.symlink(tmpfile.name+'.broken', brknlnk)
+        filelist = list(flister(tmpdir1))
+    assert len(filelist) == 3
+    shutil.rmtree(tmpdir1)
+
 def test_flister_recursive():
     tmpdir1 = tempfile.mkdtemp()
     tmpdir2 = tempfile.mkdtemp(dir=tmpdir1)
@@ -69,6 +80,26 @@ def test_flister_older_then(getmtime):
         root = os.path.dirname(tmpfile.name)
         assert len(list(flister(root, filename, older='2d'))) == 1
         assert len(list(flister(root, filename, older='10d'))) == 0
+
+def test_delete_link():
+    tmpfile = tempfile.NamedTemporaryFile()
+    tmpfilelnk = tmpfile.name+'.lnk'
+    os.symlink(tmpfile.name, tmpfilelnk)
+    assert os.path.exists(tmpfile.name)
+    assert os.path.islink(tmpfilelnk)
+    delete([tmpfilelnk])
+    assert not os.path.exists(tmpfilelnk)
+
+def test_delete_broken_link():
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        pass
+    tmpfilelnk = tmpfile.name+'.link'
+    os.symlink(tmpfile.name, tmpfilelnk)
+    assert os.path.lexists(tmpfilelnk)
+    assert os.path.islink(tmpfilelnk)
+    assert not os.path.exists(tmpfilelnk)
+    delete([tmpfilelnk])
+    assert not os.path.lexists(tmpfilelnk)
 
 def test_delete_file():
     tmpfile = tempfile.NamedTemporaryFile()

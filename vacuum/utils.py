@@ -123,6 +123,9 @@ def flister(rootdir=None, patterns=None, older=None, recursive=False, max_depth=
             if isfile(filepath) and pattern.match(filename) and older_then(filepath,
                                             then, date_strptime,time_strptime): 
                 yield filepath
+            elif islink(filepath) and pattern.match(filename):
+                # yield links that match pattern, links ignore older_then
+                yield filepath
             elif isdir(filepath) and recursive and depth < max_depth:
                 i = 0
                 for filepath_ in flister(filepath, patterns, older, 
@@ -149,7 +152,7 @@ def delete(filelist, raise_errors=False,
             if isdir(filepath):
                 shutil.rmtree(filepath)
                 success_directories.append(filepath)
-            elif isfile(filepath):
+            elif isfile(filepath) or os.path.lexists(filepath):
                 os.remove(filepath)
                 success_files.append(filepath)
             basedirs.update([dirname(filepath)])
