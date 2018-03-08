@@ -134,7 +134,7 @@ def flister(rootdir=None, patterns=None, older_then=None, recursive=False, max_d
                                         time_strptime):
                     yield filepath_
                     i += 1
-                if i == 0 and not os.listdir(filepath):
+                if i == 0 and os.path.exists(filepath) and not os.listdir(filepath):
                     # empty dirs are yielded as well regardless of parameters
                     yield filepath
 
