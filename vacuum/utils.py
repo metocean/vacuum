@@ -188,11 +188,13 @@ def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
         try:
             if root_depth:
                 branch = dirname(filepath.split(os.sep, root_depth+1)[-1])
-                destination = join(destination, branch)
-            maybe_create_dirs(destination)
-            assert isdir(destination)
+                final_destination = join(destination, branch)
+            else:
+                final_destination = destination
+            maybe_create_dirs(final_destination)
+            assert isdir(final_destination)
             if isfile(filepath) or islink(filepath):
-                shutil.move(filepath, destination)
+                shutil.copy2(filepath, final_destination)
         except Exception as exc:
             errors[filepath] = exc
     message = 'Some files (%d) could not be archived' % len(errors)        

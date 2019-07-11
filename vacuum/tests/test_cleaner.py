@@ -74,7 +74,21 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum.run()
         assert os.listdir(self.destination)
 
-    @mock.patch('shutil.move', side_effect=OSError('Not permitted'))
+    def test_archive_overwites_on_existing(self):
+        _, tmpfile = tempfile.mkstemp(dir=self.rootdir)
+        shutil.copy2(tmpfile, self.destination)
+        with open(tmpfile, 'w') as of:
+            of.write('oi')
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'patterns': ['.+'],
+        }]
+        self.vacuum.run()
+        basename = os.path.basename(tmpfile)
+        assert open(os.path.join(self.destination, basename)).read() == open(tmpfile).read()
+
+    @mock.patch('shutil.copy2', side_effect=OSError('Not permitted'))
     def test_archive_with_errors(self, move):
         tmpfile = tempfile.mkstemp(dir=self.rootdir)
         self.vacuum.archive = [{

@@ -157,10 +157,10 @@ def test_datetime_from_filename_parser():
 def test_archive_simple():
     tmpdir = tempfile.mkdtemp()
     try:
-        _, tmpfile = tempfile.mkstemp()
+        _, tmpfile = tempfile.mkstemp(dir=tmpdir)
         basename = os.path.basename(tmpfile)
         archive([tmpfile], tmpdir)
-        assert not os.path.exists(tmpfile)
+        assert os.path.exists(tmpfile)
         assert os.path.exists(os.path.join(tmpdir, basename))
     finally:
         shutil.rmtree(tmpdir)

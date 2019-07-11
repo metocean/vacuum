@@ -15,9 +15,9 @@ parser = argparse.ArgumentParser()
 subparser = parser.add_subparsers(help='Available opertions for vaccum')
 
 parser_list = subparser.add_parser('list', help='List files according with conditions' )
-parser_clean = subparser.add_parser('clean', help='Clean up files')
+parser_clean = subparser.add_parser('clean', help='Clean up [delete] files')
+parser_archive = subparser.add_parser('archive', help='Archive [copy] files and directories')
 parser_scrub = subparser.add_parser('scrub', help='Clean up docker images and containers')
-parser_archive = subparser.add_parser('archive', help='Archive files and directories')
 
 recursive_args = []
 
@@ -63,7 +63,7 @@ parser_archive.add_argument('--root_depth',
                             help="Preserve directory tree from `root_depth`. Default: Don't preserve",
                             default=0)
 parser_archive.add_argument('destination', 
-                            help='Destination directory to archive files at')
+                            help='Destination directory to archive [copy] files at')
 
 def list_files(args=None, filelist=None):
     filelist = filelist or flister(args.root, args.pattern, args.older_then, 
@@ -157,8 +157,8 @@ def archive(args):
 
 parser_list.set_defaults(func=list_files)
 parser_clean.set_defaults(func=clean)
-parser_scrub.set_defaults(func=scrub)
 parser_archive.set_defaults(func=archive)
+parser_scrub.set_defaults(func=scrub)
 
 if __name__ == "__main__":
     args = parser.parse_args()
