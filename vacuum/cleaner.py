@@ -32,8 +32,8 @@ class VacuumCleaner(object):
                                                           rule_id))
             filelist = flister(**options)
             success_files, success_dirs, errors = operation(filelist, **options)
-            self.logger.info('%s of %s complete: %d files and %d directories deleted' %\
-                (operation.__name__.title(),rule_id,len(success_files),len(success_dirs)))
+            self.logger.info('%s of %s complete: %d files and %d directories %sd' %\
+                (operation.__name__.title(),rule_id,len(success_files),len(success_dirs),operation.__name__))
             if errors:
                 self.logger.warning('Could not %s some files, please check below...' % \
                                                             operation.__name__\
