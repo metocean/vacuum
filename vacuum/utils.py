@@ -195,6 +195,7 @@ def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
             assert isdir(final_destination)
             if isfile(filepath) or islink(filepath):
                 shutil.copy2(filepath, final_destination)
+                success_files.append(filepath)
         except Exception as exc:
             errors[filepath] = exc
     message = 'Some files (%d) could not be archived' % len(errors)        
