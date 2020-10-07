@@ -210,6 +210,8 @@ def archive(filelist, destination, root_depth=0, raise_errors=False,
                 if os.path.exists(final_file):
                     os.remove(final_file)
                 os.rename(tmp_file, final_file)
+                if action == 'move' and os.path.exists(final_file):
+                    os.remove(filepath)
                 success_files.append(filepath)
         except Exception as exc:
             errors[filepath] = exc

@@ -95,6 +95,20 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum.run()
         assert os.listdir(self.destination)
 
+    def test_archive_move(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, delete=False)
+        tmpfile.close()
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'patterns': ['.+'],
+            'raise_errors': True,
+            'action': 'move',
+        }]
+        self.vacuum.run()
+        assert not os.listdir(self.rootdir)
+        assert os.listdir(self.destination)
+
     def test_archive_overwites_on_existing(self):
         _, tmpfile = tempfile.mkstemp(dir=self.rootdir)
         shutil.copy2(tmpfile, self.destination)
