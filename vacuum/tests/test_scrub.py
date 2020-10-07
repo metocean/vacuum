@@ -57,20 +57,20 @@ class TestWhaleScrubber(unittest.TestCase):
         self.scrubber._maybe_remove_image(image, False)
         images.remove.assert_called_with(image.id, force=False)
 
-    def test_containers_older_then(self):
+    def test_containers_older_than(self):
         container1 = mock.MagicMock()
         container2 = mock.MagicMock()
         container1.attrs = {'Created': pastdt('10d',utc=True).isoformat()}
         container2.attrs = {'Created': pastdt('20d',utc=True).isoformat()}
         containers = [container1, container2]
-        result = self.scrubber._created_before_then(containers, '9d')
+        result = self.scrubber._created_before_than(containers, '9d')
         assert result == [container1, container2]
-        result = self.scrubber._created_before_then(containers, '15d')
+        result = self.scrubber._created_before_than(containers, '15d')
         assert result == [container2]
-        result = self.scrubber._created_before_then(containers, '21d')
+        result = self.scrubber._created_before_than(containers, '21d')
         assert result == []
 
-    def test_containers_older_then_with_cycle(self):
+    def test_containers_older_than_with_cycle(self):
         self.scrubber.relative_to = 'cycle'
         self.scrubber.set_cycle(datetime.datetime.now())
         container1 = mock.MagicMock()
@@ -78,11 +78,11 @@ class TestWhaleScrubber(unittest.TestCase):
         container1.attrs = {'Created': pastdt('10d',utc=True).isoformat()}
         container2.attrs = {'Created': pastdt('20d',utc=True).isoformat()}
         containers = [container1, container2]
-        result = self.scrubber._created_before_then(containers, '9d')
+        result = self.scrubber._created_before_than(containers, '9d')
         assert result == [container1, container2]
-        result = self.scrubber._created_before_then(containers, '15d')
+        result = self.scrubber._created_before_than(containers, '15d')
         assert result == [container2]
-        result = self.scrubber._created_before_then(containers, '21d')
+        result = self.scrubber._created_before_than(containers, '21d')
         assert result == []
 
     @mock.patch('docker.client.ContainerCollection')
@@ -102,7 +102,7 @@ class TestWhaleScrubber(unittest.TestCase):
 
     
     @mock.patch('docker.client.ContainerCollection')
-    def test_clean_containers_with_older_then_filters(self, containers_class):
+    def test_clean_containers_with_older_than_filters(self, containers_class):
         containers = mock.MagicMock()
         containers_class.return_value = containers
         container1 = mock.MagicMock()
@@ -112,7 +112,7 @@ class TestWhaleScrubber(unittest.TestCase):
         container1.attrs = {'Created': pastdt('10d',utc=True).isoformat()}
         container2.attrs = {'Created': pastdt('20d',utc=True).isoformat()}
         containers.list.return_value = [container1, container2]
-        filters = [{'older_then':'15d'}]
+        filters = [{'older_than':'15d'}]
         self.scrubber._clean_containers(filters=filters) 
         containers.list.assert_called_with(all=True, filters={})
         container2.remove.assert_called()

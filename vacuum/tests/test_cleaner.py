@@ -51,7 +51,7 @@ class VacuumCleanerCleanTest(unittest.TestCase):
             assert exists(tmpfile.name)
         self.vacuum.clean = [{
             'rootdir': self.rootdir,
-            'older_then': '0s',
+            'older_than': '0s',
             'patterns': ['test_clean'],
         }]
         self.vacuum.run()

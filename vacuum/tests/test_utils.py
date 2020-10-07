@@ -21,12 +21,12 @@ def test_pastdt():
     assert now-past < datetime.timedelta(days=2)
 
 @mock.patch('vacuum.utils.getmtime')
-def test_older_then(getmtime):
+def test_older_than(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\
                             - datetime.timedelta(days=20))
     with tempfile.NamedTemporaryFile() as tmpfile:
-        assert is_older_then(tmpfile.name, pastdt('15d'))
-        assert not is_older_then(tmpfile.name, pastdt('21d'))
+        assert is_older_than(tmpfile.name, pastdt('15d'))
+        assert not is_older_than(tmpfile.name, pastdt('21d'))
 
 def test_flister_re():
     with tempfile.NamedTemporaryFile() as tmpfile:
@@ -71,27 +71,27 @@ def test_flister_empty_dirs():
         assert len(list(flister(tmpdir1, 'abc', recursive=True, max_depth=3))) == 1
 
 @mock.patch('vacuum.utils.getmtime')
-def test_flister_older_then(getmtime):
+def test_flister_older_than(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\
                             - datetime.timedelta(days=4))
 
     with tempfile.NamedTemporaryFile() as tmpfile:
         filename = os.path.basename(tmpfile.name)
         root = os.path.dirname(tmpfile.name)
-        assert len(list(flister(root, filename, older_then='2d'))) == 1
-        assert len(list(flister(root, filename, older_then='10d'))) == 0
+        assert len(list(flister(root, filename, older_than='2d'))) == 1
+        assert len(list(flister(root, filename, older_than='10d'))) == 0
 
 @mock.patch('vacuum.utils.getmtime')
-def test_flister_older_then_with_relative_time(getmtime):
+def test_flister_older_than_with_relative_time(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\
                             - datetime.timedelta(days=4))
     with tempfile.NamedTemporaryFile() as tmpfile:
         filename = os.path.basename(tmpfile.name)
         root = os.path.dirname(tmpfile.name)
-        assert len(list(flister(root, filename, older_then='2d', 
+        assert len(list(flister(root, filename, older_than='2d', 
                                 now=datetime.datetime.now()))) == 1
         now = datetime.datetime.now()-datetime.timedelta(days=4)
-        assert len(list(flister(root, filename, older_then='2d', now=now))) == 0
+        assert len(list(flister(root, filename, older_than='2d', now=now))) == 0
 
 def test_delete_link():
     tmpfile = tempfile.NamedTemporaryFile()

@@ -30,8 +30,8 @@ for sub in [parser_list, parser_clean, parser_archive]:
                         help='A RE pattern to search files inside root dir, accept multiple values',
                         action='append',
                         default=None)
-    sub.add_argument('-o','--older_then', 
-                        help='Find files older then a giving period (i.e. 1h or 2min or 5d)',
+    sub.add_argument('-o','--older_than', 
+                        help='Find files older than a giving period (i.e. 1h or 2min or 5d)',
                         action='store',
                         default=None)
     sub.add_argument('-d','--max_depth', 
@@ -40,12 +40,12 @@ for sub in [parser_list, parser_clean, parser_archive]:
                         default=1,
                         type=int)
     sub.add_argument('--date_strptime', 
-                        help='Date strptime formatting for use as older_then',
+                        help='Date strptime formatting for use as older_than',
                         action='store',
                         default=None,
                         type=str)
     sub.add_argument('--time_strptime', 
-                        help='Time strptime formatting for use as older_then',
+                        help='Time strptime formatting for use as older_than',
                         action='store',
                         default=None,
                         type=str)
@@ -66,7 +66,7 @@ parser_archive.add_argument('destination',
                             help='Destination directory to archive [copy] files at')
 
 def list_files(args=None, filelist=None):
-    filelist = filelist or flister(args.root, args.pattern, args.older_then, 
+    filelist = filelist or flister(args.root, args.pattern, args.older_than, 
                                    args.recursive, args.max_depth,
                                    date_strptime=args.date_strptime, 
                                    time_strptime=args.time_strptime)
@@ -77,7 +77,7 @@ def list_files(args=None, filelist=None):
     return files
 
 def clean_or_archive(operation, args, **opargs):
-    filelist = flister(args.root, args.pattern, args.older_then, args.recursive, 
+    filelist = flister(args.root, args.pattern, args.older_than, args.recursive, 
                        args.max_depth, 
                        date_strptime=args.date_strptime, 
                        time_strptime=args.time_strptime)

@@ -3,7 +3,7 @@ archive:
         rootdir: /data/roms/*/* # <--- directory glob matching pattern
         destination: /archive # destination root directory to archive
         root_depth: 2 # preserve directory tree after root_depth level. Default 0 which will not preserve tree structure
-        older_then: 60d
+        older_than: 60d
         date_strptime: %Y%m%d
         time_strptime: %Hz
         recursive: True
@@ -14,7 +14,7 @@ archive:
 clean:
     some_rule_name:
         rootdir: /data # <--- directory glob matching pattern
-        older_then: 60d
+        older_than: 60d
         delete_empty: true # Delete empty folders
         date_strptime: %Y%m%d
         time_strptime: %Hz
@@ -47,6 +47,6 @@ scrub:
         filters: # https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.list
             - name: dedicated
               status: exited
-              older_then: 2m # created more then 2 months ago
+              older_than: 2m # created more than 2 months ago
 
             -  name: container_b

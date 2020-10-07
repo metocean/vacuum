@@ -15,7 +15,7 @@ def test_list_command_with_pattern():
     assert files
 
 @mock.patch('vacuum.utils.getmtime')
-def test_list_older_then(getmtime):
+def test_list_older_than(getmtime):
     getmtime.return_value = timestamp(datetime.datetime.now()\
                             - datetime.timedelta(days=11))
     with tempfile.NamedTemporaryFile() as tmpfile:

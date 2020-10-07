@@ -66,14 +66,14 @@ class WhaleScrubber(object):
             self.logger.warning('Arrgh! Sticky container (%s): %s' %\
                                          (container.name, exc.explanation))
 
-    def _created_before_then(self, containers, older_then):
+    def _created_before_than(self, containers, older_than):
         older_containers = []
-        then = pastdt(older_then, utc=True)
+        than = pastdt(older_than, utc=True)
         for container in containers:
             created_at = container.attrs['Created'].split('.')[0]
             created_at = datetime.datetime.strptime(created_at,
                                                  "%Y-%m-%dT%H:%M:%S")
-            if created_at < then:
+            if created_at < than:
                 older_containers.append(container)
         return older_containers
 
@@ -102,11 +102,11 @@ class WhaleScrubber(object):
             containers.extend(self.client.containers.list(all=True))
         else:
             for ifilter in filters:
-                older_then = ifilter.pop('older_then', None)
+                older_than = ifilter.pop('older_than', None)
                 filtered = self.client.containers.list(all=True, 
                                                           filters=ifilter)
-                if older_then:
-                    filtered = self._created_before_then(filtered, older_then)
+                if older_than:
+                    filtered = self._created_before_than(filtered, older_than)
                 containers.extend(filtered)
         if containers:
             self.logger.info('Scrubbing containers...')
