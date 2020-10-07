@@ -18,19 +18,19 @@ __all__ = ['flister', 'is_older_than', 'pastdt',
            'delete', 'path2dt',
            'timestamp','archive','rand_chars']
 
-STRPTIME_RE = re.compile('\%[YymdHMSaAwbBIpfzZjUW]')
+STRPTIME_RE = re.compile(r'\%[YymdHMSaAwbBIpfzZjUW]')
 
 STPTIME_TO_RE = {
-    '%Y' : '(19|20)\d{2}',
-    '%p': '(AM|PM|am|pm)',
-    '%f': '\d{6}',
-    '%j': '\d{3}',
-    '%Z': '[A-Z]{3,5}',
-    '%z': '(\+|\-)\d{4}',
+    '%Y' : r'(1|2)\d{3}',
+    '%p': r'(AM|PM|am|pm)',
+    '%f': r'\d{6}',
+    '%j': r'\d{3}',
+    '%Z': r'[A-Z]{3,5}',
+    '%z': r'(\+|\-)\d{4}',
 }
 
 for i in ['%y','%m','%d','%H','%M','%S','%W']:
-    STPTIME_TO_RE[i] = '\d{2}'
+    STPTIME_TO_RE[i] = r'\d{2}'
 
 
 def rand_chars(lenght=8):
@@ -42,7 +42,6 @@ def strptime_re(strptime):
     for i in STRPTIME_RE.findall(strptime):
         strptime = re.sub(i, STPTIME_TO_RE[i], strptime)
     return re.compile(strptime)
-
 
 def path2dt(filepath, date_strptime, time_strptime=None):
     """

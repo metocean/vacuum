@@ -21,7 +21,7 @@ def get_requirements(filename):
     return open(filename).read().splitlines()
 
 
-install_requires = get_requirements('requirements.txt')
+install_requires = get_requirements('requirements/default.txt')
 if sys.version_info < (3, 0):
     install_requires.append('futures')
 

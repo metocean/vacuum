@@ -1,5 +1,4 @@
 PyYaml
 six
 py-timeparser
-mock
-pytest
+docker
