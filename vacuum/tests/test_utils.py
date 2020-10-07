@@ -81,6 +81,18 @@ def test_flister_older_then(getmtime):
         assert len(list(flister(root, filename, older_then='2d'))) == 1
         assert len(list(flister(root, filename, older_then='10d'))) == 0
 
+@mock.patch('vacuum.utils.getmtime')
+def test_flister_older_then_with_relative_time(getmtime):
+    getmtime.return_value = timestamp(datetime.datetime.now()\
+                            - datetime.timedelta(days=4))
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        filename = os.path.basename(tmpfile.name)
+        root = os.path.dirname(tmpfile.name)
+        assert len(list(flister(root, filename, older_then='2d', 
+                                now=datetime.datetime.now()))) == 1
+        now = datetime.datetime.now()-datetime.timedelta(days=4)
+        assert len(list(flister(root, filename, older_then='2d', now=now))) == 0
+
 def test_delete_link():
     tmpfile = tempfile.NamedTemporaryFile()
     tmpfilelnk = tmpfile.name+'.lnk'

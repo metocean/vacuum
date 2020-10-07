@@ -12,12 +12,19 @@ class WhaleScrubber(object):
     Perform cleaning operations of images and containers
     """
     def __init__(self, images={}, containers={}, client=None, 
+                 relative_to='runtime',
                  logger=logging, **kwargs):
         super(WhaleScrubber, self).__init__()
         self.client = client or docker.from_env()
         self.logger = logger
         self.images = images
         self.containers = containers
+        self.relative_to = relative_to
+        self.now = datetime.datetime.utcnow()
+
+    def set_cycle(self, cycle_dt):
+        if self.relative_to == 'cycle' and isinstance(cycle_dt, datetime.datetime):
+            self.now = cycle_dt
 
     def _listify_ignore(self, ignore):
         ignores = set()

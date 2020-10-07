@@ -69,16 +69,19 @@ def timestamp(dtobj):
     elif six.PY3:
         return dtobj.timestamp()
 
-def pastdt(parseable, utc=False):
+def pastdt(parseable, utc=False, now=None):
     '''
     Return datetime object giving a py-timeparser parseable period from now.
     '''
     seconds = timeparser.parse(parseable)
-    then = datetime.timedelta(seconds=seconds)
-    if utc:
-        return datetime.datetime.utcnow()-then
+    delta = datetime.timedelta(seconds=seconds)
+    if now:
+        return now-delta
     else:
-        return datetime.datetime.now()-then 
+        if utc:
+            return datetime.datetime.utcnow()-delta
+        else:
+            return datetime.datetime.now()-delta
 
 def is_older_then(filepath, then, date_strptime=None, time_strptime=None):
     """ 
@@ -103,7 +106,7 @@ def str2re(patterns):
 
    
 def flister(rootdir=None, patterns=None, older_then=None, recursive=False, max_depth=1,
-            depth=1, date_strptime=None, time_strptime=None, **kwargs):
+            depth=1, date_strptime=None, time_strptime=None, now=None, **kwargs):
     """
     Genrates a list of files giving a `rootdir` and a 
     list of matching RE patterns. Also filters for files `older_then` then
@@ -115,7 +118,7 @@ def flister(rootdir=None, patterns=None, older_then=None, recursive=False, max_d
 
     compiled = str2re(patterns)
 
-    then = pastdt(older_then) if older_then is not None else None
+    then = pastdt(older_then, now=now) if older_then is not None else None
     
     for filepath in iglob(join(rootdir,'*')):
         filename = basename(filepath)

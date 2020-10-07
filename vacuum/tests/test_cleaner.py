@@ -4,6 +4,7 @@ import mock
 import logging
 import tempfile
 import shutil
+import datetime
 from os.path import *
 
 import docker
@@ -33,6 +34,24 @@ class VacuumCleanerCleanTest(unittest.TestCase):
             assert exists(tmpfile.name)
         self.vacuum.clean = [{
             'rootdir': self.rootdir,
+            'patterns': ['test_clean'],
+        }]
+        self.vacuum.run()
+        assert not all([exists(f) for f in files])
+
+    def test_clean_with_cycle(self):
+        self.vacuum.relative_to = 'cycle'
+        self.vacuum.set_cycle(datetime.datetime.now())
+        files = []
+        for i in range(5):
+            tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
+                                                  suffix='test_clean')
+            tmpfile.file.close()
+            files.append(tmpfile.name)
+            assert exists(tmpfile.name)
+        self.vacuum.clean = [{
+            'rootdir': self.rootdir,
+            'older_then': '0s',
             'patterns': ['test_clean'],
         }]
         self.vacuum.run()

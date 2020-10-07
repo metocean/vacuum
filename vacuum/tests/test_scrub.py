@@ -2,6 +2,7 @@ import unittest
 import mock
 import logging
 import docker
+import datetime
 
 from ..scrub import WhaleScrubber
 from ..utils import pastdt
@@ -57,6 +58,21 @@ class TestWhaleScrubber(unittest.TestCase):
         images.remove.assert_called_with(image.id, force=False)
 
     def test_containers_older_then(self):
+        container1 = mock.MagicMock()
+        container2 = mock.MagicMock()
+        container1.attrs = {'Created': pastdt('10d',utc=True).isoformat()}
+        container2.attrs = {'Created': pastdt('20d',utc=True).isoformat()}
+        containers = [container1, container2]
+        result = self.scrubber._created_before_then(containers, '9d')
+        assert result == [container1, container2]
+        result = self.scrubber._created_before_then(containers, '15d')
+        assert result == [container2]
+        result = self.scrubber._created_before_then(containers, '21d')
+        assert result == []
+
+    def test_containers_older_then_with_cycle(self):
+        self.scrubber.relative_to = 'cycle'
+        self.scrubber.set_cycle(datetime.datetime.now())
         container1 = mock.MagicMock()
         container2 = mock.MagicMock()
         container1.attrs = {'Created': pastdt('10d',utc=True).isoformat()}

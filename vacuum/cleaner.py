@@ -3,16 +3,25 @@ import os
 import shutil
 
 import logging
+import datetime
 
-from .utils import *
+from .utils import archive, delete, flister
 
 class VacuumCleaner(object):
     """Wrapper to perform cleaning/archive operations"""
-    def __init__(self, clean=None, archive=None, logger=logging, **kwargs):
+    def __init__(self, clean=None, archive=None, 
+                 relative_to='runtime',
+                 logger=logging, **kwargs):
         super(VacuumCleaner, self).__init__()
         self.clean = clean
         self.archive = archive
         self.logger = logger
+        self.now = datetime.datetime.utcnow()
+        self.relative_to = relative_to
+
+    def set_cycle(self, cycle_dt):
+        if self.relative_to == 'cycle' and isinstance(cycle_dt, datetime.datetime):
+            self.now = cycle_dt
 
     def _prepare_rules(self, rules):
         if isinstance(rules, (list,tuple)):
@@ -30,7 +39,7 @@ class VacuumCleaner(object):
         for rule_id, options in rules:
             self.logger.info('Processing %s of %s rule'% (operation.__name__, 
                                                           rule_id))
-            filelist = flister(**options)
+            filelist = flister(now=self.now, **options)
             success_files, success_dirs, errors = operation(filelist, **options)
             self.logger.info('%s of %s complete: %d files and %d directories %sd' %\
                 (operation.__name__.title(),rule_id,len(success_files),len(success_dirs),operation.__name__))
