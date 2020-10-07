@@ -6,6 +6,8 @@ import datetime
 import yaml
 import shutil
 import re
+import string
+import random
 
 import timeparser
 
@@ -30,6 +32,9 @@ STPTIME_TO_RE = {
 for i in ['%y','%m','%d','%H','%M','%S','%W']:
     STPTIME_TO_RE[i] = '\d{2}'
 
+
+def rand_chars(lenght=8):
+    return ''.join([random.choice(string.ascii_letters) for i in range(lenght)])
 
 def strptime_re(strptime):
     prepattern = []
@@ -184,7 +189,8 @@ def remove_if_empty(dirpath):
     except:
         pass
 
-def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
+def archive(filelist, destination, root_depth=0, raise_errors=False, 
+            action='copy', **kwargs):
     errors = {}
     success_files, success_directories = [], []
     for filepath in filelist:
@@ -196,8 +202,14 @@ def archive(filelist, destination, root_depth=0, raise_errors=False, **kwargs):
                 final_destination = destination
             maybe_create_dirs(final_destination)
             assert isdir(final_destination)
+            filename = os.path.basename(filepath)
+            tmp_file = os.path.join(final_destination, filename+'.'+rand_chars())
+            final_file = os.path.join(final_destination, filename)
             if isfile(filepath) or islink(filepath):
-                shutil.copy2(filepath, final_destination)
+                shutil.copy2(filepath, tmp_file)
+                if os.path.exists(final_file):
+                    os.remove(final_file)
+                os.rename(tmp_file, final_file)
                 success_files.append(filepath)
         except Exception as exc:
             errors[filepath] = exc
