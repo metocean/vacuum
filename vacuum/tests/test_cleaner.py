@@ -83,7 +83,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         shutil.rmtree(self.rootdir)
         shutil.rmtree(self.destination)
 
-    def test_archive_simple(self):
+    def test_archive_copy(self):
         tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, delete=False)
         tmpfile.close()
         self.vacuum.archive = [{
@@ -93,6 +93,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
             'raise_errors': True,
         }]
         self.vacuum.run()
+        assert os.listdir(self.rootdir)
         assert os.listdir(self.destination)
 
     def test_archive_move(self):

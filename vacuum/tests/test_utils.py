@@ -7,6 +7,7 @@ import pytest
 import shutil
 import stat
 import six
+import string
 
 from ..utils import *
 
@@ -199,3 +200,10 @@ def test_archive_preserve_root():
     finally:
         shutil.rmtree(tmpdir0)
         shutil.rmtree(dest)
+
+def test_rand_chars():
+    assert any(set(string.ascii_letters) & set(rand_chars()))
+    assert len(rand_chars(3)) == 3
+    assert len(rand_chars(8)) == 8
+    assert rand_chars() != rand_chars()
+

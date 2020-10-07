@@ -16,7 +16,7 @@ from glob import iglob
 
 __all__ = ['flister', 'is_older_than', 'pastdt', 
            'delete', 'path2dt',
-           'timestamp','archive']
+           'timestamp','archive','rand_chars']
 
 STRPTIME_RE = re.compile('\%[YymdHMSaAwbBIpfzZjUW]')
 
