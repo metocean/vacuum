@@ -1,0 +1,21 @@
+name: unittests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.6]
+    name: Unittests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Test dependencies
+        run: pip install -r requirements/tests.txt
+      - name: Install library
+        run: pip install .
+      - name: Run Tests
+        run: pytest --cov=ops_core
