@@ -1,2 +1,7 @@
 # vacuum
-Python library to handle deleting and moving of files and dockers and other resources
+
+![](https://github.com/metocean/ops-core/workflows/unittests/badge.svg)
+
+Python library to handle deleting and archive of files and cleanup of dockers containers and images.
+
+[See options here](/examples.yaml)

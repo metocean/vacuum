@@ -4,6 +4,7 @@ archive:
         destination: /archive # destination root directory to archive
         root_depth: 2 # preserve directory tree after root_depth level. Default 0 which will not preserve tree structure
         older_than: 60d
+        action: move # Delete source file once has copied to destination, default is 'copy'
         date_strptime: %Y%m%d
         time_strptime: %Hz
         recursive: True
