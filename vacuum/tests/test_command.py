@@ -1,3 +1,4 @@
+import os
 from os.path import *
 import mock
 import tempfile
@@ -70,3 +71,46 @@ class CleanFilesTestCase(unittest.TestCase):
         args = parser.parse_args(['clean',self.rootdir,'-fe'])
         args.func(args)
         assert not exists(self.rootdir)
+
+class ArchiveFilesTestCase(unittest.TestCase):
+    def setUp(self):
+        self.rootdir = tempfile.mkdtemp()
+        self.destination = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.rootdir)
+        shutil.rmtree(self.destination)
+
+    def test_archive_copy(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, suffix='test_archive', 
+                                              delete=False)
+        tmpfile.close()
+        args = parser.parse_args(['archive', '-f', self.rootdir, self.destination])
+        args.func(args)
+        assert os.listdir(self.rootdir)
+        assert os.listdir(self.destination)
+
+    def test_archive_move(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, suffix='test_archive', 
+                                              delete=False)
+        tmpfile.close()
+        args = parser.parse_args(['archive','-a','move','-f', self.rootdir, self.destination])
+        args.func(args)
+        assert not os.listdir(self.rootdir)
+        assert os.listdir(self.destination)
+
+    def test_archive_links_as_links(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, suffix='test_archive', 
+                                              delete=False)
+        tmpfile.close()
+        os.symlink(basename(tmpfile.name), tmpfile.name+'.link')
+        args = parser.parse_args(['archive','-f', self.rootdir, self.destination])
+        args.func(args)
+        assert os.listdir(self.destination)
+        dst = join(self.destination, basename(tmpfile.name))
+        assert islink(dst+'.link')
+        assert os.readlink(dst+'.link') == basename(tmpfile.name)
+        assert isfile(dst)
+        
+
+

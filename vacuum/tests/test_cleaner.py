@@ -110,6 +110,25 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         assert not os.listdir(self.rootdir)
         assert os.listdir(self.destination)
 
+    def test_archive_links(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, 
+                                              suffix='test_archive', 
+                                              delete=False)
+        tmpfile.close()
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'patterns': ['.+'],
+            'raise_errors': True,
+        }]
+        os.symlink(basename(tmpfile.name), tmpfile.name+'.link')
+        self.vacuum.run()
+        assert os.listdir(self.destination)
+        dst = join(self.destination, basename(tmpfile.name))
+        assert islink(dst+'.link')
+        assert os.readlink(dst+'.link') == basename(tmpfile.name)
+        assert isfile(dst)
+
     def test_archive_overwites_on_existing(self):
         _, tmpfile = tempfile.mkstemp(dir=self.rootdir)
         shutil.copy2(tmpfile, self.destination)

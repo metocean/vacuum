@@ -5,9 +5,7 @@ import pprint
 import six
 import logging
 
-
-
-from .utils import flister, delete
+from .utils import flister, delete, archive
 from .scrub import WhaleScrubber
 
 parser = argparse.ArgumentParser()
@@ -59,13 +57,16 @@ for sub in [parser_clean, parser_archive]:
     sub.add_argument('-f','--force', help="Don't prompt for confirmation",
                         action='store_true')
 
+parser_archive.add_argument('-a','--action', 
+                            help="Action to be used for archive `move` or `copy` (default)",
+                            default='copy')
 parser_archive.add_argument('--root_depth', 
-                            help="Preserve directory tree from `root_depth`. Default: Don't preserve",
+                            help="Preserve directory tree from `root_depth`. Default: 0",
                             default=0)
 parser_archive.add_argument('destination', 
                             help='Destination directory to archive [copy] files at')
 
-def list_files(args=None, filelist=None):
+def _list_files(args=None, filelist=None):
     filelist = filelist or flister(args.root, args.pattern, args.older_than, 
                                    args.recursive, args.max_depth,
                                    date_strptime=args.date_strptime, 
@@ -94,9 +95,10 @@ def clean_or_archive(operation, args, **opargs):
         else:
             option = six.moves.input(message) or 'N'
         if option == 'l':
-            list_files(filelist=[first_file])
-            list_files(filelist=filelist)
+            _list_files(filelist=[first_file])
+            _list_files(filelist=filelist)
         elif option in ['y','Y']:
+            print(opargs)
             files0, dirs0, errors0 = operation([first_file],**opargs)
             files, dirs, errors = operation(filelist,**opargs)
             errors.update(errors0)
@@ -125,7 +127,7 @@ parser_scrub.add_argument('--filter', help="Add filter values for image/containe
 parser_scrub.add_argument('-f','--force', help="Force removal of images or containers",
                           action='store_true')
 
-def scrub(args):
+def _scrub(args):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
@@ -147,18 +149,18 @@ def scrub(args):
         scrubber.containers = config
     scrubber.run()
 
-parser_scrub.set_defaults(func=scrub)
-
-def clean(args):
+def _clean(args):
     clean_or_archive(delete, args, delete_empty=args.empty)
 
-def archive(args):
-    clean_or_archive(archive, args, root_depth=args.root_depth)
+def _archive(args):
+    clean_or_archive(archive, args, root_depth=args.root_depth, 
+                                    destination=args.destination,
+                                    action=args.action)
 
-parser_list.set_defaults(func=list_files)
-parser_clean.set_defaults(func=clean)
-parser_archive.set_defaults(func=archive)
-parser_scrub.set_defaults(func=scrub)
+parser_list.set_defaults(func=_list_files)
+parser_clean.set_defaults(func=_clean)
+parser_archive.set_defaults(func=_archive)
+parser_scrub.set_defaults(func=_scrub)
 
 if __name__ == "__main__":
     args = parser.parse_args()

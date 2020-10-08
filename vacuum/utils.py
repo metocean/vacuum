@@ -93,7 +93,7 @@ def is_older_than(filepath, than, date_strptime=None, time_strptime=None):
     """
     if than is None:
         return True
-    elif os.path.exists(filepath):
+    elif exists(filepath):
         mtime = datetime.datetime.fromtimestamp(getmtime(filepath))
         if date_strptime:
             mtime = path2dt(filepath, date_strptime, time_strptime) or mtime
@@ -141,7 +141,7 @@ def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_d
                                         time_strptime):
                     yield filepath_
                     i += 1
-                if i == 0 and os.path.exists(filepath) and not os.listdir(filepath):
+                if i == 0 and exists(filepath) and not os.listdir(filepath):
                     # empty dirs are yielded as well regardless of parameters
                     yield filepath
 
@@ -159,7 +159,7 @@ def delete(filelist, raise_errors=False,
             if isdir(filepath):
                 shutil.rmtree(filepath)
                 success_directories.append(filepath)
-            elif isfile(filepath) or os.path.lexists(filepath):
+            elif isfile(filepath) or lexists(filepath):
                 os.remove(filepath)
                 success_files.append(filepath)
             basedirs.update([dirname(filepath)])
@@ -192,28 +192,32 @@ def archive(filelist, destination, root_depth=0, raise_errors=False,
             action='copy', **kwargs):
     errors = {}
     success_files, success_directories = [], []
-    for filepath in filelist:
+    for src in filelist:
         try:
             if root_depth:
-                branch = dirname(filepath.split(os.sep, root_depth+1)[-1])
+                branch = dirname(src.split(os.sep, root_depth+1)[-1])
                 final_destination = join(destination, branch)
             else:
+                branch = dirname(src)
                 final_destination = destination
             maybe_create_dirs(final_destination)
             assert isdir(final_destination)
-            filename = os.path.basename(filepath)
-            tmp_file = os.path.join(final_destination, filename+'.'+rand_chars())
-            final_file = os.path.join(final_destination, filename)
-            if isfile(filepath) or islink(filepath):
-                shutil.copy2(filepath, tmp_file)
-                if os.path.exists(final_file):
+            filename = basename(src)
+            tmp_file = join(final_destination, filename+'.'+rand_chars())
+            final_file = join(final_destination, filename)
+            if islink(src):
+                os.symlink(os.readlink(src), final_file)
+                shutil.copystat(src, final_file)
+            elif isfile(src):
+                shutil.copy2(src, tmp_file)
+                if exists(final_file):
                     os.remove(final_file)
                 os.rename(tmp_file, final_file)
-                if action == 'move' and os.path.exists(final_file):
-                    os.remove(filepath)
-                success_files.append(filepath)
+            if action == 'move' and exists(final_file):
+                os.remove(src)
+            success_files.append(src)     
         except Exception as exc:
-            errors[filepath] = exc
+            errors[src] = exc
     message = 'Some files (%d) could not be archived' % len(errors)        
     if errors and raise_errors:
         raise Exception(message)  
