@@ -1,4 +1,4 @@
-PyYaml
+PyYaml<5
 six
 py-timeparser
 docker
