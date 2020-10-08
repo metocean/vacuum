@@ -98,7 +98,6 @@ def clean_or_archive(operation, args, **opargs):
             _list_files(filelist=[first_file])
             _list_files(filelist=filelist)
         elif option in ['y','Y']:
-            print(opargs)
             files0, dirs0, errors0 = operation([first_file],**opargs)
             files, dirs, errors = operation(filelist,**opargs)
             errors.update(errors0)

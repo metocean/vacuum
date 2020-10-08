@@ -206,8 +206,9 @@ def archive(filelist, destination, root_depth=0, raise_errors=False,
             tmp_file = join(final_destination, filename+'.'+rand_chars())
             final_file = join(final_destination, filename)
             if islink(src):
+                if islink(final_file):
+                    os.remove(final_file)
                 os.symlink(os.readlink(src), final_file)
-                shutil.copystat(src, final_file)
             elif isfile(src):
                 shutil.copy2(src, tmp_file)
                 if exists(final_file):
