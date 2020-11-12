@@ -109,7 +109,7 @@ def str2re(patterns):
     return compiled
 
    
-def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_depth=1,
+def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_depth=-1,
             depth=1, date_strptime=None, time_strptime=None, now=None, **kwargs):
     """
     Genrates a list of files giving a `rootdir` and a 
@@ -133,7 +133,8 @@ def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_d
             elif islink(filepath) and pattern.match(filename):
                 # yield links that match pattern, links ignore older_than
                 yield filepath
-            elif isdir(filepath) and recursive and depth < max_depth:
+            elif isdir(filepath) and recursive and \
+                (max_depth == -1 or depth < max_depth):
                 i = 0
                 for filepath_ in flister(filepath, patterns, older_than, 
                                         recursive, max_depth, 

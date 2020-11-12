@@ -59,6 +59,28 @@ def test_flister_recursive():
                 filelist = list(flister(tmpdir1, 'xyz', recursive=True,max_depth=3))
     assert len(filelist) == 3
 
+def test_flister_recursive_max_depth():
+    tmpdir1 = tempfile.mkdtemp()
+    tmpdir2 = tempfile.mkdtemp(dir=tmpdir1)
+    tmpdir3 = tempfile.mkdtemp(dir=tmpdir2)
+    
+    with tempfile.NamedTemporaryFile(prefix='xyz', dir=tmpdir1) as tmpfile1:
+        with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir2) as tmpfile2:
+            with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir3) as tmpfile3:
+                filelist = list(flister(tmpdir1, 'xyz', recursive=True, max_depth=2))
+    assert len(filelist) == 2
+
+def test_flister_recursive_max_depth_default():
+    tmpdir1 = tempfile.mkdtemp()
+    tmpdir2 = tempfile.mkdtemp(dir=tmpdir1)
+    tmpdir3 = tempfile.mkdtemp(dir=tmpdir2)
+    
+    with tempfile.NamedTemporaryFile(prefix='xyz', dir=tmpdir1) as tmpfile1:
+        with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir2) as tmpfile2:
+            with tempfile.NamedTemporaryFile(prefix='xyz',dir=tmpdir3) as tmpfile3:
+                filelist = list(flister(tmpdir1, 'xyz', recursive=True, max_depth=-1))
+    assert len(filelist) == 3
+
 def test_flister_default():
     assert list(flister(os.path.dirname(__file__)))
     assert not list(flister('/nonexistent'))
