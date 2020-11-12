@@ -1,7 +1,7 @@
 relative_to: runtime # older_than relative to "cycle" or to "runtime" (option "cycle" is default)
 stop_on_error: True # make process stop if any unexpected error is encountered (default: False)
 delete_empty: False # don't delete empty folders (default: true)
-dry_run: True # Delete
+dry_run: True # Only list files target to be vacuumed
 archive:
     some_archive_rule_name:
         rootdir: /data/roms/*/* # <--- directory glob matching pattern
