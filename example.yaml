@@ -1,3 +1,7 @@
+relative_to: runtime # older_than relative to "cycle" or to "runtime" (option "cycle" is default)
+stop_on_error: True # make process stop if any unexpected error is encountered (default: False)
+delete_empty: False # don't delete empty folders (default: true)
+dry_run: True # Delete
 archive:
     some_archive_rule_name:
         rootdir: /data/roms/*/* # <--- directory glob matching pattern
@@ -8,7 +12,7 @@ archive:
         date_strptime: %Y%m%d
         time_strptime: %Hz
         recursive: True
-        max_depth: 2
+        max_depth: 2 # Set max recursion depth for rule (default: -1 (infinite))
         patterns: # <- RE filters to include
             - .+\.txt # same as *.txt in shell
 
@@ -16,18 +20,16 @@ clean:
     some_rule_name:
         rootdir: /data # <--- directory glob matching pattern
         older_than: 60d
-        delete_empty: true # Delete empty folders
+        delete_empty: false # Do not delete empty folders for this rule
         date_strptime: %Y%m%d
         time_strptime: %Hz
         recursive: True
-        max_depth: 2
         patterns: # <- RE filters to include
             - .+\.txt
 
     some_other_rule:
         rootdir: '/data/roms/*'
         recursive: True
-        max_depth: 4
         patterns:
             - '\.nc$'
 
