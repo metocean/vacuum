@@ -6,7 +6,7 @@ archive:
     some_archive_rule_name:
         rootdir: /data/roms/*/* # <--- directory glob matching pattern
         destination: /archive # destination root directory to archive
-        root_depth: 2 # preserve directory tree after root_depth level. Default 0 which will not preserve tree structure
+        root_depth: 2 # preserve directory tree after root_depth level. (Default: 0 - preserve all tree)
         older_than: 60d
         action: move # Delete source file once has copied to destination, default is 'copy'
         date_strptime: %Y%m%d
