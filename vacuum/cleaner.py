@@ -11,7 +11,7 @@ class VacuumCleaner(object):
     """Wrapper to perform cleaning/archive operations"""
     def __init__(self, clean=None, archive=None, 
                  dry_run=False,
-                 relative_to='runtime',
+                 relative_to='cycle',
                  logger=logging, **kwargs):
         super(VacuumCleaner, self).__init__()
         self.clean = clean
@@ -22,7 +22,7 @@ class VacuumCleaner(object):
         self.relative_to = relative_to
 
     def set_cycle(self, cycle_dt):
-        if self.relative_to == 'cycle' and isinstance(cycle_dt, datetime.datetime):
+        if not self.relative_to == 'runtime':
             self.now = cycle_dt
 
     def _prepare_rules(self, rules):
@@ -38,8 +38,9 @@ class VacuumCleaner(object):
 
     def _archive_or_clean(self, operation, rules):
         rules = self._prepare_rules(rules)
+        self.logger.info('Processing all "%s" operations...' % operation)
         for rule_id, options in rules:
-            self.logger.info('Processing %s of %s rule'% (operation.__name__, 
+            self.logger.info('Processing "%s" for "%s"...'% (operation.__name__, 
                                                           rule_id))
             filelist = flister(now=self.now, **options)
             if self.dry_run:
@@ -57,7 +58,9 @@ class VacuumCleaner(object):
                             os.linesep.join(['%s: %s' % i for i in errors.items()]))
 
     def run(self):
-        self.logger.info('Starting cleanup...')
+        self.logger.info('Powering vacuum cleaner...')
+        self.logger.info('Older-than will be relative to (%s) %s' %\
+                                                 (self.relative_to, self.now))
         if self.archive:
             self._archive_or_clean(archive, self.archive)
 

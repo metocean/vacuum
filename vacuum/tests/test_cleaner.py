@@ -4,7 +4,7 @@ import mock
 import logging
 import tempfile
 import shutil
-import datetime
+from datetime import datetime,timedelta
 from os.path import *
 
 import docker
@@ -12,6 +12,14 @@ import docker
 from ..cleaner import VacuumCleaner
 from ..utils import pastdt
 
+def set_mtime(filename, mtime):
+    """
+    Set the modification time of a given filename to the given mtime.
+    mtime must be a datetime object.
+    """
+    stat = os.stat(filename)
+    atime = stat.st_atime
+    os.utime(filename, times=(atime, mtime.timestamp()))
 
 def create_files(nfiles=5, **kwargs):
     return [tempfile.mkstemp(**kwargs)[1] for f in range(nfiles)]
@@ -40,11 +48,34 @@ class VacuumCleanerCleanTest(unittest.TestCase):
         assert not all([exists(f) for f in self.files])
 
     def test_clean_with_cycle(self):
+        cycle = datetime(2000,1,1)
+        [set_mtime(f, cycle-timedelta(days=1)) for f in self.files[1:]]
+        set_mtime(self.files[0], cycle+timedelta(days=1))
         self.vacuum.relative_to = 'cycle'
-        self.vacuum.set_cycle(datetime.datetime.now())
-        self.vacuum.clean = [dict(rootdir=self.rootdir)]
+        self.vacuum.set_cycle(cycle)
+        self.vacuum.clean = [dict(rootdir=self.rootdir, older_than=0)]
         self.vacuum.run()
-        assert not all([exists(f) for f in self.files])
+        assert sum([exists(f) for f in self.files]) == 1
+        assert sum([not exists(f) for f in self.files]) == 4
+
+    def test_clean_with_cycle_but_relative_to_runtime(self):
+        self.vacuum.relative_to = 'runtime'
+        self.vacuum.set_cycle(datetime(3000,1,1))
+        [set_mtime(f, self.vacuum.now-timedelta(days=1)) for f in self.files[1:]]
+        set_mtime(self.files[0], self.vacuum.now+timedelta(days=1))
+        self.vacuum.clean = [dict(rootdir=self.rootdir, older_than=0)]
+        self.vacuum.run()
+        assert sum([exists(f) for f in self.files]) == 1
+        assert sum([not exists(f) for f in self.files]) == 4
+
+    def test_clean_relative_to_runtime(self):
+        self.vacuum.relative_to = 'runtime'
+        [set_mtime(f, self.vacuum.now-timedelta(days=1)) for f in self.files[1:]]
+        set_mtime(self.files[0], self.vacuum.now+timedelta(days=1))
+        self.vacuum.clean = [dict(rootdir=self.rootdir, older_than=0)]
+        self.vacuum.run()
+        assert sum([exists(f) for f in self.files]) == 1
+        assert sum([not exists(f) for f in self.files]) == 4
 
     @mock.patch('os.remove', side_effect=OSError('Not permitted'))
     def test_clean_with_errors(self, remove):
