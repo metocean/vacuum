@@ -145,9 +145,7 @@ def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_d
                     # empty dirs are yielded as well regardless of parameters
                     yield filepath
 
-def delete(filelist, raise_errors=False, 
-           delete_empty=False,
-           **kwargs):
+def delete(filelist, raise_errors=False, delete_empty=False, **kwargs):
     """
     Delete a list of files and directories
     """
@@ -166,10 +164,7 @@ def delete(filelist, raise_errors=False,
         except Exception as exc:
             errors[filepath] = exc
     if delete_empty:
-        for basedir in sorted(list(basedirs), reverse=True):
-            if len(basedir.split(sep)) > 2:
-                remove_if_empty(basedir)
-                success_directories.append(basedir)
+        success_directories.extend(remove_dir_if_empty(basedirs))
     message = 'Some files (%d) could not be deleted' % len(errors)
     if errors and raise_errors:
         raise Exception(message)
@@ -182,16 +177,28 @@ def maybe_create_dirs(path):
         if exc.errno not in [17]:
             raise
 
-def remove_if_empty(dirpath):
-    try:
-        os.rmdir(dirpath)
-    except:
-        pass
+def remove_dir_if_empty(dirlist):
+    """
+    Try to remove empty directories from a list, ignores root directories.
+    """
+    removed = []
+    for dirpath in sorted(list(dirlist), reverse=True):
+        if len(dirpath.split(sep)) > 2:
+            try:
+                os.rmdir(dirpath)
+                removed.append(dirpath)
+            except OSError as exc:
+                if exc.errno == 39:
+                    pass
+                else:
+                    raise
+    return removed
 
 def archive(filelist, destination, root_depth=0, raise_errors=False, 
-            action='copy', **kwargs):
+            action='copy', delete_empty=False, **kwargs):
     errors = {}
     success_files, success_directories = [], []
+    basedirs = set()
     for src in filelist:
         try:
             if root_depth:
@@ -216,7 +223,10 @@ def archive(filelist, destination, root_depth=0, raise_errors=False,
                 os.rename(tmp_file, final_file)
             if action == 'move' and exists(final_file):
                 os.remove(src)
-            success_files.append(src)     
+            success_files.append(src)
+            basedirs.update([dirname(src)])
+            if delete_empty:
+                success_directories.extend(remove_dir_if_empty(basedirs))
         except Exception as exc:
             errors[src] = exc
     message = 'Some files (%d) could not be archived' % len(errors)        

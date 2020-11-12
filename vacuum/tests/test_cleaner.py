@@ -4,6 +4,8 @@ import mock
 import logging
 import tempfile
 import shutil
+import pytest
+
 from datetime import datetime,timedelta
 from os.path import *
 
@@ -31,7 +33,8 @@ class VacuumCleanerCleanTest(unittest.TestCase):
         self.files = create_files(dir=self.rootdir)
 
     def tearDown(self):
-        shutil.rmtree(self.rootdir)
+        if exists(self.rootdir):
+            shutil.rmtree(self.rootdir)
 
     def test_instance(self):
         assert isinstance(self.vacuum, VacuumCleaner)
@@ -78,10 +81,23 @@ class VacuumCleanerCleanTest(unittest.TestCase):
         assert sum([not exists(f) for f in self.files]) == 4
 
     @mock.patch('os.remove', side_effect=OSError('Not permitted'))
-    def test_clean_with_errors(self, remove):
+    def test_clean_with_errors_dont_stop(self, remove):
         self.vacuum.clean = [dict(rootdir=self.rootdir)]
         self.vacuum.run()
         assert all([exists(f) for f in self.files])
+
+    @mock.patch('os.remove', side_effect=OSError('Not permitted'))
+    def test_clean_with_errors_stop(self, remove):
+        self.vacuum.clean = [dict(rootdir=self.rootdir, raise_errors=True)]
+        with pytest.raises(Exception):
+            self.vacuum.run()
+
+    @mock.patch('os.remove', side_effect=OSError('Not permitted'))
+    def test_clean_with_errors_stop_general_rule(self, remove):
+        self.vacuum.stop_on_error = True
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
+        with pytest.raises(Exception):
+            self.vacuum.run()
 
 class VacuumCleanerArchiveTest(unittest.TestCase):
     def setUp(self):
@@ -92,8 +108,10 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.files = create_files(dir=self.rootdir)
 
     def tearDown(self):
-        shutil.rmtree(self.rootdir)
-        shutil.rmtree(self.destination)
+        if exists(self.rootdir):
+            shutil.rmtree(self.rootdir)
+        if exists(self.destination):            
+            shutil.rmtree(self.destination)
 
     def test_archive_copy(self):
         self.vacuum.archive = [{
@@ -105,6 +123,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         assert os.listdir(self.destination)
 
     def test_archive_move(self):
+        self.vacuum.delete_empty = False
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,

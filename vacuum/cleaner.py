@@ -11,15 +11,19 @@ class VacuumCleaner(object):
     """Wrapper to perform cleaning/archive operations"""
     def __init__(self, clean=None, archive=None, 
                  dry_run=False,
+                 delete_empty=True,
                  relative_to='cycle',
+                 stop_on_error=False,
                  logger=logging, **kwargs):
         super(VacuumCleaner, self).__init__()
         self.clean = clean
         self.archive = archive
-        self.logger = logger
         self.dry_run = dry_run
-        self.now = datetime.datetime.utcnow()
+        self.delete_empty = delete_empty
         self.relative_to = relative_to
+        self.stop_on_error = stop_on_error
+        self.logger = logger
+        self.now = datetime.datetime.utcnow()
 
     def set_cycle(self, cycle_dt):
         if not self.relative_to == 'runtime':
@@ -40,6 +44,8 @@ class VacuumCleaner(object):
         rules = self._prepare_rules(rules)
         self.logger.info('Processing all "%s" operations...' % operation)
         for rule_id, options in rules:
+            options['delete_empty'] = options.get('delete_empty', self.delete_empty)
+            options['raise_errors'] = options.get('raise_errors', self.stop_on_error)
             self.logger.info('Processing "%s" for "%s"...'% (operation.__name__, 
                                                           rule_id))
             filelist = flister(now=self.now, **options)
