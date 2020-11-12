@@ -13,10 +13,14 @@ from ..cleaner import VacuumCleaner
 from ..utils import pastdt
 
 
+def create_files(nfiles=5, **kwargs):
+    return [tempfile.mkstemp(**kwargs)[1] for f in range(nfiles)]
+
 class VacuumCleanerCleanTest(unittest.TestCase):
     def setUp(self):
         self.vacuum = VacuumCleaner()
         self.rootdir = tempfile.mkdtemp()
+        self.files = create_files(dir=self.rootdir)
 
     def tearDown(self):
         shutil.rmtree(self.rootdir)
@@ -24,86 +28,55 @@ class VacuumCleanerCleanTest(unittest.TestCase):
     def test_instance(self):
         assert isinstance(self.vacuum, VacuumCleaner)
 
-    def test_clean(self):
-        files = []
-        for i in range(5):
-            tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
-                                                  suffix='test_clean')
-            tmpfile.file.close()
-            files.append(tmpfile.name)
-            assert exists(tmpfile.name)
-        self.vacuum.clean = [{
-            'rootdir': self.rootdir,
-            'patterns': ['test_clean'],
-        }]
+    def test_dry_run_on_clean(self):
+        self.vacuum.dry_run = True
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
         self.vacuum.run()
-        assert not all([exists(f) for f in files])
+        assert all([exists(f) for f in self.files])
+
+    def test_clean(self):
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
+        self.vacuum.run()
+        assert not all([exists(f) for f in self.files])
 
     def test_clean_with_cycle(self):
         self.vacuum.relative_to = 'cycle'
         self.vacuum.set_cycle(datetime.datetime.now())
-        files = []
-        for i in range(5):
-            tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
-                                                  suffix='test_clean')
-            tmpfile.file.close()
-            files.append(tmpfile.name)
-            assert exists(tmpfile.name)
-        self.vacuum.clean = [{
-            'rootdir': self.rootdir,
-            'older_than': '0s',
-            'patterns': ['test_clean'],
-        }]
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
         self.vacuum.run()
-        assert not all([exists(f) for f in files])
+        assert not all([exists(f) for f in self.files])
 
     @mock.patch('os.remove', side_effect=OSError('Not permitted'))
     def test_clean_with_errors(self, remove):
-        files = []
-        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir,
-                                              suffix='test_clean')
-        tmpfile.file.close()
-
-        files.append(tmpfile.name)
-        self.vacuum.clean = [{
-            'rootdir': self.rootdir,
-            'patterns': ['test_clean'],
-        }]
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
         self.vacuum.run()
-        assert all([exists(f) for f in files])
-
+        assert all([exists(f) for f in self.files])
 
 class VacuumCleanerArchiveTest(unittest.TestCase):
     def setUp(self):
         self.vacuum = VacuumCleaner()
         self.rootdir = tempfile.mkdtemp()
         self.destination = tempfile.mkdtemp()
+        self.rootdir = tempfile.mkdtemp()
+        self.files = create_files(dir=self.rootdir)
 
     def tearDown(self):
         shutil.rmtree(self.rootdir)
         shutil.rmtree(self.destination)
 
     def test_archive_copy(self):
-        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, delete=False)
-        tmpfile.close()
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
-            'patterns': ['.+'],
-            'raise_errors': True,
         }]
         self.vacuum.run()
         assert os.listdir(self.rootdir)
         assert os.listdir(self.destination)
 
     def test_archive_move(self):
-        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, delete=False)
-        tmpfile.close()
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
-            'patterns': ['.+'],
-            'raise_errors': True,
             'action': 'move',
         }]
         self.vacuum.run()
@@ -111,26 +84,23 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         assert os.listdir(self.destination)
 
     def test_archive_links(self):
-        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, 
-                                              suffix='test_archive', 
-                                              delete=False)
-        tmpfile.close()
+        tmpfile = self.files[0]
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
             'patterns': ['.+'],
             'raise_errors': True,
         }]
-        os.symlink(basename(tmpfile.name), tmpfile.name+'.link')
+        os.symlink(basename(tmpfile), tmpfile+'.link')
         self.vacuum.run()
         assert os.listdir(self.destination)
-        dst = join(self.destination, basename(tmpfile.name))
+        dst = join(self.destination, basename(tmpfile))
         assert islink(dst+'.link')
-        assert os.readlink(dst+'.link') == basename(tmpfile.name)
+        assert os.readlink(dst+'.link') == basename(tmpfile)
         assert isfile(dst)
 
     def test_archive_overwites_on_existing(self):
-        _, tmpfile = tempfile.mkstemp(dir=self.rootdir)
+        tmpfile = self.files[0]
         shutil.copy2(tmpfile, self.destination)
         with open(tmpfile, 'w') as of:
             of.write('oi')
@@ -145,7 +115,6 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
 
     @mock.patch('shutil.copy2', side_effect=OSError('Not permitted'))
     def test_archive_with_errors(self, move):
-        tmpfile = tempfile.mkstemp(dir=self.rootdir)
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
