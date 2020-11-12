@@ -5,7 +5,7 @@ import logging
 import tempfile
 import shutil
 import pytest
-
+import time
 from datetime import datetime,timedelta
 from os.path import *
 
@@ -14,14 +14,14 @@ import docker
 from ..cleaner import VacuumCleaner
 from ..utils import pastdt
 
+
 def set_mtime(filename, mtime):
     """
     Set the modification time of a given filename to the given mtime.
     mtime must be a datetime object.
     """
-    stat = os.stat(filename)
-    atime = stat.st_atime
-    os.utime(filename, times=(atime, mtime.timestamp()))
+    timestamp = time.mktime(mtime.timetuple()) + mtime.microsecond/1e6
+    os.utime(filename, (os.stat(filename).st_atime, timestamp))
 
 def create_files(nfiles=5, **kwargs):
     return [tempfile.mkstemp(**kwargs)[1] for f in range(nfiles)]
