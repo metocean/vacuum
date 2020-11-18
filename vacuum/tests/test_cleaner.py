@@ -116,6 +116,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
     def test_archive_copy(self):
         self.vacuum.archive = [{
             'destination' : self.destination,
+            'action': 'copy',
             'rootdir': self.rootdir,
         }]
         self.vacuum.run()
@@ -138,6 +139,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
+            'action': 'copy',
             'patterns': ['.+'],
             'raise_errors': True,
         }]
@@ -157,6 +159,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
+            'action': 'copy',
             'patterns': ['.+'],
         }]
         self.vacuum.run()
@@ -168,6 +171,7 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum.archive = [{
             'destination' : self.destination,
             'rootdir': self.rootdir,
+            'action' : 'copy',
             'patterns': ['.+'],
         }]
         self.vacuum.run()

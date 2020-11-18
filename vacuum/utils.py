@@ -195,8 +195,9 @@ def remove_dir_if_empty(dirlist):
                     raise
     return removed
 
-def archive(filelist, destination, root_depth=0, raise_errors=False, 
-            action='copy', delete_empty=False, **kwargs):
+def archive(filelist, destination, action, root_depth=0, raise_errors=False, 
+            delete_empty=False, **kwargs):
+    assert action in ['copy','move'], "action must be either `copy` or `move`, not %s" % str(action)
     errors = {}
     success_files, success_directories = [], []
     basedirs = set()

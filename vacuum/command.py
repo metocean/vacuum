@@ -10,7 +10,7 @@ from .scrub import WhaleScrubber
 
 parser = argparse.ArgumentParser()
 
-subparser = parser.add_subparsers(help='Available opertions for vaccum')
+subparser = parser.add_subparsers(help='Available operations for vacuum command')
 
 parser_list = subparser.add_parser('list', help='List files according with conditions' )
 parser_clean = subparser.add_parser('clean', help='Clean up [delete] files')
@@ -58,8 +58,7 @@ for sub in [parser_clean, parser_archive]:
                         action='store_true')
 
 parser_archive.add_argument('-a','--action', 
-                            help="Action to be used for archive `move` or `copy` (default)",
-                            default='copy')
+                            help="Action to be used for archive `move` or `copy`")
 parser_archive.add_argument('--root_depth', 
                             help="Preserve directory tree from `root_depth`. Default: 0",
                             default=0)

@@ -194,9 +194,20 @@ def test_archive_simple():
     try:
         _, tmpfile = tempfile.mkstemp(dir=tmpdir)
         basename = os.path.basename(tmpfile)
-        archive([tmpfile], tmpdir)
+        archive([tmpfile], tmpdir, action='copy')
         assert os.path.exists(tmpfile)
         assert os.path.exists(os.path.join(tmpdir, basename))
+    finally:
+        shutil.rmtree(tmpdir)
+
+
+def test_archive_needs_action():
+    tmpdir = tempfile.mkdtemp()
+    try:
+        _, tmpfile = tempfile.mkstemp(dir=tmpdir)
+        basename = os.path.basename(tmpfile)
+        with pytest.raises(TypeError):
+            archive([tmpfile], tmpdir)
     finally:
         shutil.rmtree(tmpdir)
 
@@ -211,12 +222,12 @@ def test_archive_preserve_root():
     try:
         for root_depth in range(1,5):
             _, tmpfile = tempfile.mkstemp(dir=tmpdir3)
-            archive([tmpfile], dest, root_depth=root_depth)
+            archive([tmpfile], dest, root_depth=root_depth, action='copy')
             basename = tmpfile.split(os.sep, root_depth+1)[-1]
             assert os.path.exists(os.path.join(dest, basename))
         root_depth = 5
         _, tmpfile = tempfile.mkstemp(dir=tmpdir3)
-        archive([tmpfile], dest, root_depth=root_depth)
+        archive([tmpfile], dest, root_depth=root_depth, action='copy')
         basename = os.path.basename(tmpfile)
         assert os.path.exists(os.path.join(dest, basename))
     finally:

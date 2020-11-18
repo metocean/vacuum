@@ -81,11 +81,21 @@ class ArchiveFilesTestCase(unittest.TestCase):
         shutil.rmtree(self.rootdir)
         shutil.rmtree(self.destination)
 
-    def test_archive_copy(self):
+    def test_archive_needs_copy(self):
         tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, suffix='test_archive', 
                                               delete=False)
         tmpfile.close()
         args = parser.parse_args(['archive', '-f', self.rootdir, self.destination])
+        with pytest.raises(Exception):
+            args.func(args)
+        assert os.listdir(self.rootdir)
+        assert not os.listdir(self.destination)
+
+    def test_archive_copy(self):
+        tmpfile = tempfile.NamedTemporaryFile(dir=self.rootdir, suffix='test_archive', 
+                                              delete=False)
+        tmpfile.close()
+        args = parser.parse_args(['archive','-a','copy', '-f', self.rootdir, self.destination])
         args.func(args)
         assert os.listdir(self.rootdir)
         assert os.listdir(self.destination)
@@ -104,7 +114,7 @@ class ArchiveFilesTestCase(unittest.TestCase):
                                               delete=False)
         tmpfile.close()
         os.symlink(basename(tmpfile.name), tmpfile.name+'.link')
-        args = parser.parse_args(['archive','-f', self.rootdir, self.destination])
+        args = parser.parse_args(['archive','-a','copy','-f', self.rootdir, self.destination])
         args.func(args)
         assert os.listdir(self.destination)
         dst = join(self.destination, basename(tmpfile.name))
