@@ -23,11 +23,16 @@ class VacuumCleaner(object):
         self.relative_to = relative_to
         self.stop_on_error = stop_on_error
         self.logger = logger
-        self.now = datetime.datetime.utcnow()
+        self.set_cycle()
 
-    def set_cycle(self, cycle_dt):
-        if not self.relative_to == 'runtime':
+    def set_cycle(self, cycle_dt=None):
+        """
+        cycle == runtime if not called after instantiation
+        """
+        if self.relative_to == 'cycle' and isinstance(cycle_dt, datetime.datetime):
             self.now = cycle_dt
+        else:
+            self.now = datetime.datetime.utcnow()
 
     def _prepare_rules(self, rules):
         if isinstance(rules, (list,tuple)):
