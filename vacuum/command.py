@@ -5,7 +5,7 @@ import pprint
 import six
 import logging
 
-from .utils import flister, delete, archive
+from .utils import flister, delete, archive, setup_logger
 from .scrub import WhaleScrubber
 
 parser = argparse.ArgumentParser()
@@ -77,6 +77,7 @@ def _list_files(args=None, filelist=None):
     return files
 
 def clean_or_archive(operation, args, **opargs):
+    logger = setup_logger()
     filelist = flister(args.root, args.pattern, args.older_than, args.recursive, 
                        args.max_depth, 
                        date_strptime=args.date_strptime, 
@@ -84,10 +85,10 @@ def clean_or_archive(operation, args, **opargs):
     try: 
         first_file = next(filelist)
     except StopIteration: 
-        print('Floor is shining, nothing to clean!')
+        logger.info('Floor is shining, nothing to clean!')
         return
 
-    message = 'There is dust to be vacuum-cleaned, Power ON? (l/y/N):'
+    message = 'There is some dust to be vacuumed, Power ON? (l/y/N):'
     while True:
         if args.force:
             option = 'Y'
@@ -97,20 +98,19 @@ def clean_or_archive(operation, args, **opargs):
             _list_files(filelist=[first_file])
             _list_files(filelist=filelist)
         elif option in ['y','Y']:
-            files0, dirs0, errors0 = operation([first_file],**opargs)
-            files, dirs, errors = operation(filelist,**opargs)
+            files0, dirs0, errors0 = operation([first_file], logger=logger, **opargs)
+            files, dirs, errors = operation(filelist, logger=logger, **opargs)
             errors.update(errors0)
             if files:
-                print('Successfully vacuum-cleaned %d files and %d directories!' %\
+                logger.info('Successfully vacuum-cleaned %d files and %d directories!' %\
                                                  (len(files+files0),
                                                   len(dirs+dirs0)))
             if errors:
-
                 message = 'Oh no! Some dust still glued to the floor (%d)! Show? (y/N):' % len(errors)
                 option = six.moves.input(message) if not args.force else option
                 if option in ['y','Y']:
-                    for error in errors.items():
-                        print('%s ---> %s' % error )
+                    logger.error('%s: %s%s' % (message, os.linesep, 
+                                 os.linesep.join(['%s: %s' % (k,v) for k,v in errors.items()])))
             break
         elif option in ['n','N']:
             break
@@ -126,15 +126,7 @@ parser_scrub.add_argument('-f','--force', help="Force removal of images or conta
                           action='store_true')
 
 def _scrub(args):
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
+    logger = setup_logger()
     config = {
             'ignore': args.ignore or [],
             'filters': [dict(v.split('=') for v in args.filter)] if args.filter else {},

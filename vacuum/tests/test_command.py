@@ -10,6 +10,7 @@ import unittest
 from ..command import parser
 from ..utils import timestamp
 
+
 def test_list_command_with_pattern():
     args = parser.parse_args(['list','/var/log','-p','.+\.log'])
     files = args.func(args)

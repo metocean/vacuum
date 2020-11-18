@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import six
 import time
@@ -8,6 +9,7 @@ import shutil
 import re
 import string
 import random
+import logging
 
 import timeparser
 
@@ -32,6 +34,16 @@ STPTIME_TO_RE = {
 for i in ['%y','%m','%d','%H','%M','%S','%W']:
     STPTIME_TO_RE[i] = r'\d{2}'
 
+
+def setup_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
 
 def rand_chars(lenght=8):
     return ''.join([random.choice(string.ascii_letters) for i in range(lenght)])
@@ -146,7 +158,7 @@ def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_d
                     # empty dirs are yielded as well regardless of parameters
                     yield filepath
 
-def delete(filelist, raise_errors=False, delete_empty=False, **kwargs):
+def delete(filelist, raise_errors=False, delete_empty=False, logger=logging, **kwargs):
     """
     Delete a list of files and directories
     """
@@ -157,28 +169,31 @@ def delete(filelist, raise_errors=False, delete_empty=False, **kwargs):
         try:
             if isdir(filepath):
                 shutil.rmtree(filepath)
+                logger.debug('Removed directory: %s' % filepath)
                 success_directories.append(filepath)
             elif isfile(filepath) or lexists(filepath):
                 os.remove(filepath)
+                logger.debug('Deleted file: %s' % filepath)
                 success_files.append(filepath)
             basedirs.update([dirname(filepath)])
-        except Exception as exc:
+        except OSError as exc:
             errors[filepath] = exc
     if delete_empty:
-        success_directories.extend(remove_dir_if_empty(basedirs))
+        success_directories.extend(remove_dir_if_empty(basedirs, logger))
     message = 'Some files (%d) could not be deleted' % len(errors)
     if errors and raise_errors:
-        raise Exception(message)
+        raise OSError(message)
     return success_files, success_directories, errors
 
-def maybe_create_dirs(path):
+def maybe_create_dirs(path, logger=logging):
     try:
         os.makedirs(path)
+        logger.info('Created directory: %s' % path)
     except OSError as exc:
         if exc.errno not in [17]:
             raise
 
-def remove_dir_if_empty(dirlist):
+def remove_dir_if_empty(dirlist, logger=logging):
     """
     Try to remove empty directories from a list, ignores root directories.
     """
@@ -187,6 +202,7 @@ def remove_dir_if_empty(dirlist):
         if len(dirpath.split(sep)) > 2:
             try:
                 os.rmdir(dirpath)
+                logger.debug('Removed empty-directory: %s' % dirpath)
                 removed.append(dirpath)
             except OSError as exc:
                 if exc.errno == 39:
@@ -196,7 +212,7 @@ def remove_dir_if_empty(dirlist):
     return removed
 
 def archive(filelist, destination, action, root_depth=0, raise_errors=False, 
-            delete_empty=False, **kwargs):
+            delete_empty=False, logger=logging, **kwargs):
     assert action in ['copy','move'], "action must be either `copy` or `move`, not %s" % str(action)
     errors = {}
     success_files, success_directories = [], []
@@ -216,22 +232,32 @@ def archive(filelist, destination, action, root_depth=0, raise_errors=False,
             final_file = join(final_destination, filename)
             if islink(src):
                 if islink(final_file):
+                    logger.debug('Overwriting link at: %s ...' % (final_file))
                     os.remove(final_file)
-                os.symlink(os.readlink(src), final_file)
+                src_link = os.readlink(src)
+                os.symlink(src_link, final_file)
+                logger.debug('Copied link: %s to %s --> %s' % (src, final_file, src_link))
             elif isfile(src):
                 shutil.copy2(src, tmp_file)
                 if exists(final_file):
+                    logger.debug('Overwriting file at: %s ...' % (final_file))
                     os.remove(final_file)
+                logger.debug('Copied file: %s to %s' % (src, dirname(final_file)))
                 os.rename(tmp_file, final_file)
             if action == 'move' and exists(final_file):
                 os.remove(src)
+                logger.debug('Deleted source file: %s' % src)
             success_files.append(src)
             basedirs.update([dirname(src)])
             if delete_empty:
-                success_directories.extend(remove_dir_if_empty(basedirs))
-        except Exception as exc:
+                success_directories.extend(remove_dir_if_empty(basedirs, logger))
+        except OSError as exc:
             errors[src] = exc
-    message = 'Some files (%d) could not be archived' % len(errors)        
-    if errors and raise_errors:
-        raise Exception(message)  
+    
+    if errors:
+        message = '%d file(s) could not be archived' % len(errors)
+        logger.error('%s: %s%s' % (message, os.linesep, 
+                 os.linesep.join(['%s: %s' % (k,v) for k,v in errors.items()])))
+        if raise_errors:
+            raise Exception(message)
     return success_files, success_directories, errors
