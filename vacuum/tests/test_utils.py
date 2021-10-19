@@ -177,7 +177,7 @@ def test_delete_error_print(rmtree):
 
 
 def test_datetime_from_filename_parser():
-    example = '/data/wrf/gfs_nz8km/wrf20180114/nz_8km_06z.GrbF042'
+    example = r'/data/wrf/gfs_nz8km/wrf20180114/nz_8km_06z.GrbF042'
     expected = datetime.datetime(2018,1,14,6)
     assert path2dt(example, date_strptime='%Y%m%d',time_strptime='%Hz') == expected
 

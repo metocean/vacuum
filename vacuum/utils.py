@@ -23,16 +23,16 @@ __all__ = ['flister', 'is_older_than', 'pastdt',
 STRPTIME_RE = re.compile(r'\%[YymdHMSaAwbBIpfzZjUW]')
 
 STPTIME_TO_RE = {
-    '%Y' : r'(1|2)\d{3}',
+    '%Y' : r'(1|2)\\d{3}',
     '%p': r'(AM|PM|am|pm)',
-    '%f': r'\d{6}',
-    '%j': r'\d{3}',
+    '%f': r'\\d{6}',
+    '%j': r'\\d{3}',
     '%Z': r'[A-Z]{3,5}',
-    '%z': r'(\+|\-)\d{4}',
+    '%z': r'(\\\\+|\\\\-)\\d{4}',
 }
 
 for i in ['%y','%m','%d','%H','%M','%S','%W']:
-    STPTIME_TO_RE[i] = r'\d{2}'
+    STPTIME_TO_RE[i] = r'\\d{2}'
 
 
 def setup_logger():
