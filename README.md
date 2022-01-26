@@ -25,6 +25,7 @@ archive:
         max_depth: 2 # Set max recursion depth for rule (default: -1 (infinite))
         patterns: # <- RE filters to include
             - .+\.txt # same as *.txt in shell
+        include_hidden: True # Also Archive hidden files (for archive, Default: False)
 
 clean:
     some_rule_name:
@@ -36,6 +37,7 @@ clean:
         recursive: True
         patterns: # <- RE filters to include
             - .+\.txt
+        include_hidden: False # Don't Clean hidden files (for Clean, Default: True)
 
     some_other_rule:
         rootdir: '/data/roms/*'

@@ -10,6 +10,7 @@ import re
 import string
 import random
 import logging
+import itertools
 
 import timeparser
 
@@ -122,7 +123,8 @@ def str2re(patterns):
 
    
 def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_depth=-1,
-            depth=1, date_strptime=None, time_strptime=None, now=None, **kwargs):
+            depth=1, date_strptime=None, time_strptime=None, now=None, 
+            include_hidden=True, **kwargs):
     """
     Genrates a list of files giving a `rootdir` and a 
     list of matching RE patterns. Also filters for files `older_than` than
@@ -135,8 +137,14 @@ def flister(rootdir=None, patterns=None, older_than=None, recursive=False, max_d
     compiled = str2re(patterns)
 
     than = pastdt(older_than, now=now) if older_than is not None else None
-    
-    for filepath in iglob(join(rootdir,'*')):
+
+    if include_hidden:
+        all_files = itertools.chain(iglob(join(rootdir,'*')),
+                                    iglob(join(rootdir,'.*')))
+    else:
+        all_files = iglob(join(rootdir,'*'))
+
+    for filepath in all_files:
         filename = basename(filepath)
         for pattern in compiled:
             if isfile(filepath) and pattern.match(filename) and \

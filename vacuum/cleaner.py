@@ -45,12 +45,13 @@ class VacuumCleaner(object):
         else:
             raise Exception('Archive and Cleaning rules must a dict or list of rules')
 
-    def _archive_or_clean(self, operation, rules):
+    def _archive_or_clean(self, operation, rules, include_hidden):
         rules = self._prepare_rules(rules)
         self.logger.info('Processing all "%s" operations...' % operation)
         for rule_id, options in rules:
             options['delete_empty'] = options.get('delete_empty', self.delete_empty)
             options['raise_errors'] = options.get('raise_errors', self.stop_on_error)
+            options['include_hidden'] = options.get('include_hidden', include_hidden)
             self.logger.info('Processing "%s" for "%s"...'% (operation.__name__, 
                                                           rule_id))
             filelist = flister(now=self.now, **options)
@@ -73,8 +74,10 @@ class VacuumCleaner(object):
         self.logger.info('Older-than will be relative to (%s) %s' %\
                                                  (self.relative_to, self.now))
         if self.archive:
-            self._archive_or_clean(archive, self.archive)
+            # Default for archive operations is to not include hidden files,
+            # but it can be set in operation rule
+            self._archive_or_clean(archive, self.archive, include_hidden=False)
 
         if self.clean:
-            self._archive_or_clean(delete, self.clean)
+            self._archive_or_clean(delete, self.clean, include_hidden=True)
         

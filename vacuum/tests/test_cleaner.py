@@ -39,6 +39,24 @@ class VacuumCleanerCleanTest(unittest.TestCase):
     def test_instance(self):
         assert isinstance(self.vacuum, VacuumCleaner)
 
+    def test_clean_hidden_default(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.clean = [dict(rootdir=self.rootdir)]
+        self.vacuum.run()
+        assert not all([exists(f) for f in self.files])
+
+    def test_clean_hidden_false(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.clean = [dict(rootdir=self.rootdir, include_hidden=False)]
+        self.vacuum.run()
+        assert all([f.startswith('.') for f in os.listdir(self.rootdir)])
+
+    def test_clean_hidden_true(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.clean = [dict(rootdir=self.rootdir, include_hidden=True)]
+        self.vacuum.run()
+        assert not all([exists(f) for f in self.files])
+
     def test_dry_run_on_clean(self):
         self.vacuum.dry_run = True
         self.vacuum.clean = [dict(rootdir=self.rootdir)]
@@ -104,7 +122,6 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
         self.vacuum = VacuumCleaner()
         self.rootdir = tempfile.mkdtemp()
         self.destination = tempfile.mkdtemp()
-        self.rootdir = tempfile.mkdtemp()
         self.files = create_files(dir=self.rootdir)
 
     def tearDown(self):
@@ -112,6 +129,47 @@ class VacuumCleanerArchiveTest(unittest.TestCase):
             shutil.rmtree(self.rootdir)
         if exists(self.destination):            
             shutil.rmtree(self.destination)
+
+    def test_archive_hidden_default(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.delete_empty = False
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'action': 'move',
+        }]
+        self.vacuum.run()
+        # The hidden files are left behind
+        assert all([f.startswith('.') for f in os.listdir(self.rootdir)])
+        assert not any([f.startswith('.') for f in os.listdir(self.destination)])
+
+    def test_archive_hidden_false(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.delete_empty = False
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'action': 'move',
+            'include_hidden': False,
+        }]
+        self.vacuum.run()
+        # The hidden files are left behind
+        assert all([f.startswith('.') for f in os.listdir(self.rootdir)])
+        assert not any([f.startswith('.') for f in os.listdir(self.destination)])
+
+    def test_archive_hidden_true(self):
+        self.files += create_files(dir=self.rootdir, prefix='.')
+        self.vacuum.delete_empty = False
+        self.vacuum.archive = [{
+            'destination' : self.destination,
+            'rootdir': self.rootdir,
+            'action': 'move',
+            'include_hidden': True,
+        }]
+        self.vacuum.run()
+        # No hidden files are left behind
+        assert not os.listdir(self.rootdir)
+        assert any([f.startswith('.') for f in os.listdir(self.destination)])
 
     def test_archive_copy(self):
         self.vacuum.archive = [{

@@ -116,6 +116,12 @@ def test_flister_older_than_with_relative_time(getmtime):
         now = datetime.datetime.now()-datetime.timedelta(days=4)
         assert len(list(flister(root, filename, older_than='2d', now=now))) == 0
 
+def test_flister_hidden():
+    with tempfile.NamedTemporaryFile(prefix='.') as tmpfile:
+        root = os.path.dirname(tmpfile.name)
+        assert tmpfile.name in flister(root, include_hidden=True)
+        assert tmpfile.name not in flister(root, include_hidden=False)
+
 def test_delete_link():
     tmpfile = tempfile.NamedTemporaryFile()
     tmpfilelnk = tmpfile.name+'.lnk'
@@ -239,4 +245,3 @@ def test_rand_chars():
     assert len(rand_chars(3)) == 3
     assert len(rand_chars(8)) == 8
     assert rand_chars() != rand_chars()
-
