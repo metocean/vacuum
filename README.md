@@ -1,6 +1,6 @@
 # vacuum
 
-![](https://github.com/metocean/ops-core/workflows/unittests/badge.svg)
+![](https://github.com/metocean/vacuum/workflows/unittests/badge.svg)
 
 Python library to handle deleting and archive of files and cleanup of dockers containers and images.
 
