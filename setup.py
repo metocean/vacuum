@@ -32,7 +32,7 @@ setup(name='vacuum',
       author_email='andre@metocean.co.nz',
       url='https://github.com/metocean/vacuum',
       license='MIT',
-      packages=['vacuum'],
+      packages=find_packages(),
       install_requires=install_requires,
       entry_points={
         'console_scripts': [
