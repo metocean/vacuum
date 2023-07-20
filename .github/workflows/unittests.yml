@@ -18,6 +18,7 @@ jobs:
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
           sudo apt update &&\
+          sudo apt install -y $(echo $(cat requirements/ubuntu.txt)) &&\
           pip install -r requirements/default.txt &&\
           pip install -r requirements/tests.txt &&\
           pip install .
